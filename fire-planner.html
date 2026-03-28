@@ -287,58 +287,39 @@
     <div class="input-grid">
       <div class="input-block">
         <span class="input-label">현재 나이</span>
-        <div class="input-row"><input type="number" id="i-age" value="32" min="20" max="65" oninput="run()"><span class="input-unit">세</span></div>
+        <div class="input-row"><input type="number" id="i-age" value="32" min="20" max="65" oninput="syncAll()"><span class="input-unit">세</span></div>
       </div>
       <div class="input-block">
         <span class="input-label">현재 보유 자산 (순자산)</span>
-        <div class="input-row"><input type="number" id="i-asset" value="5000" min="0" max="500000" step="500" oninput="run();updateAssetUnit()"><span class="input-unit" id="asset-unit">만원</span></div>
+        <div class="input-row"><input type="number" id="i-asset" value="5000" min="0" max="10000000" step="500" oninput="syncAll()"><span class="input-unit" id="asset-unit">만원</span></div>
       </div>
       <div class="input-block">
         <span class="input-label">월 수입 (세후)</span>
-        <div class="input-row"><input type="number" id="i-income" value="600" min="0" max="5000" step="50" oninput="run()"><span class="input-unit">만원</span></div>
+        <div class="input-row"><input type="number" id="i-income" value="600" min="0" max="5000" step="50" oninput="syncAll()"><span class="input-unit">만원</span></div>
       </div>
       <div class="input-block">
-        <span class="input-label">현재 월 생활비</span>
-        <div class="input-row"><input type="number" id="i-living" value="300" min="50" max="1000" step="10" oninput="run()"><span class="input-unit">만원</span></div>
+        <span class="input-label">���재 월 생활비</span>
+        <div class="input-row"><input type="number" id="i-living" value="300" min="50" max="1000" step="10" oninput="syncAll()"><span class="input-unit">만원</span></div>
       </div>
-    </div>
-
-    <div class="sec-title">은퇴 설계</div>
-    <div class="input-grid">
       <div class="input-block">
         <span class="input-label">은퇴 후 목표 월 생활비</span>
-        <div class="input-row"><input type="number" id="i-retire" value="300" min="50" max="1000" step="10" oninput="run()"><span class="input-unit">만원</span></div>
+        <div class="input-row"><input type="number" id="i-retire" value="300" min="50" max="1000" step="10" oninput="syncAll()"><span class="input-unit">만원</span></div>
       </div>
       <div class="input-block">
         <span class="input-label">물가 상승률 (현재 2.2%)</span>
-        <div class="input-row"><input type="number" id="i-inflation" value="2.2" min="1" max="5" step="0.1" oninput="run()"><span class="input-unit">%</span></div>
+        <div class="input-row"><input type="number" id="i-inflation" value="2.2" min="1" max="5" step="0.1" oninput="syncAll()"><span class="input-unit">%</span></div>
       </div>
     </div>
 
-    <div class="sec-title">포트폴리오 구성 (비중 합계 = 100%)</div>
+    <div class="sec-title">자산이 만들어내는 현금흐름</div>
+    <p class="note" style="margin-bottom:12px">현재 자산에서 매월 들어오는 돈이 있으면 입력하세요. 배당, 이자, 임대 수입 등 — 근로소득과 별도입니다.</p>
     <div class="input-grid">
       <div class="input-block">
-        <span class="input-label">TIGER 미국S&P500 ETF</span>
-        <div class="input-row"><input type="number" id="p-sp" value="35" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
-      </div>
-      <div class="input-block">
-        <span class="input-label">KODEX 나스닥100 ETF</span>
-        <div class="input-row"><input type="number" id="p-nq" value="15" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
-      </div>
-      <div class="input-block">
-        <span class="input-label">KODEX 코스피200 ETF</span>
-        <div class="input-row"><input type="number" id="p-ks" value="10" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
-      </div>
-      <div class="input-block">
-        <span class="input-label" style="color:#D4960A">🏢 리츠/부동산 ETF <span style="font-size:10px;color:var(--text3)">(월배당 7~9%)</span></span>
-        <div class="input-row"><input type="number" id="p-re" value="10" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
-      </div>
-      <div class="input-block">
-        <span class="input-label">채권 / 현금성 자산</span>
-        <div class="input-row"><input type="number" id="p-bd" value="30" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
+        <span class="input-label">월 패시브 인컴 (배당·이자·임대 등)</span>
+        <div class="input-row"><input type="number" id="i-passive" value="0" min="0" max="5000" step="5" oninput="syncAll()"><span class="input-unit">만원/월</span></div>
       </div>
     </div>
-    <div id="port-sum-msg" class="note">합계: 100% ✓</div>
+    <div id="passive-summary" style="display:none;margin-bottom:14px"></div>
 
     <button class="btn-primary" onclick="showTab(1)">계산 결과 보기 →</button>
 
@@ -394,63 +375,57 @@
     <div id="swr-note" class="note"></div>
   </div>
 
-  <!-- PANEL 2: 포트폴리오 수입 -->
+  <!-- PANEL 2: 포트폴리오 비교 -->
   <div class="panel" id="panel-2">
-    <div class="sec-title">포트폴리오 구성 시각화</div>
-    <div class="port-bar" id="port-bar">
-      <div class="port-seg" id="seg-sp" style="background:#185FA5;width:35%">SP500</div>
-      <div class="port-seg" id="seg-nq" style="background:#378ADD;width:15%">NQ100</div>
-      <div class="port-seg" id="seg-ks" style="background:#1D9E75;width:10%">KS200</div>
-      <div class="port-seg" id="seg-re" style="background:#D4960A;width:10%">리츠</div>
-      <div class="port-seg" id="seg-bd" style="background:#3E5668;width:30%">채권</div>
+    <div class="sec-title">포트폴리오 선택 — 수익률 vs 리스크 트레이드오프</div>
+    <p class="note" style="margin-bottom:14px">같은 자산이라도 어떤 포트폴리오를 선택하느냐에 따라 FIRE 도달 시점이 달라집니다. 클릭해서 비교하세요.</p>
+
+    <div id="port-compare-grid" style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:20px"></div>
+
+    <!-- 선택된 포트폴리오 상세 -->
+    <div id="port-detail" style="display:none">
+      <div class="sec-title">선택한 포트폴리오 상세</div>
+      <div class="port-bar" id="port-bar" style="margin-bottom:12px"></div>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+        <table class="port-table" style="padding:0">
+          <thead>
+            <tr>
+              <th style="padding:10px 20px">자산</th>
+              <th style="padding:10px 8px">비중</th>
+              <th style="padding:10px 8px">기대 수익률</th>
+              <th style="padding:10px 20px 10px 8px;text-align:right">기여</th>
+            </tr>
+          </thead>
+          <tbody id="port-tbody"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" style="padding:12px 20px;font-weight:600">가중평균</td>
+              <td style="padding:12px 8px;color:#E8C84A;font-weight:700" id="total-ret">—</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="sec-title">이 포트폴리오로 FIRE 도달 시</div>
+      <div class="card card-highlight">
+        <div class="big-label">은퇴 후 월 인출 가능액</div>
+        <div class="big-num c-green" id="r-port-monthly">—</div>
+        <div class="big-sub" id="r-port-sub">—</div>
+      </div>
+      <div class="formula" id="r-port-formula">—</div>
     </div>
 
-    <div class="sec-title">자산별 기대 수익 분해</div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <table class="port-table" style="padding:0">
-        <thead>
-          <tr style="padding:0 20px">
-            <th style="padding:10px 20px">자산</th>
-            <th style="padding:10px 8px">비중</th>
-            <th style="padding:10px 8px">기대 수익률</th>
-            <th style="padding:10px 8px">기여 수익률</th>
-            <th style="padding:10px 20px 10px 8px;text-align:right">월 수입</th>
-          </tr>
-        </thead>
-        <tbody id="port-tbody" style="padding:0 20px"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2" style="padding:12px 20px;color:var(--text)">합계</td>
-            <td></td>
-            <td style="padding:12px 8px;color:#6AABFF" id="total-ret">—</td>
-            <td style="padding:12px 20px 12px 8px;color:var(--accent2);text-align:right" id="total-monthly">—</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-
-    <div class="sec-title">수익률 산정 근거</div>
+    <div class="sec-title" style="margin-top:24px">수익률 산정 근거</div>
     <div class="ev-table">
       <div class="ev-row"><span class="ev-left">S&P500 달러 기준 장기 연평균 (1928년~)</span><span class="ev-right c-green">~10%</span></div>
       <div class="ev-row"><span class="ev-left">원화 환산 시 환율 차감 (보수적 추정)</span><span class="ev-right">−1~2%</span></div>
       <div class="ev-row"><span class="ev-left">TIGER 미국S&P500 ETF 실질 기대</span><span class="ev-right c-blue">8.5%</span></div>
       <div class="ev-row"><span class="ev-left">나스닥100 ETF 장기 기대 (변동성 高)</span><span class="ev-right c-blue">10.0%</span></div>
       <div class="ev-row"><span class="ev-left">코스피200 ETF 장기 기대 (원화)</span><span class="ev-right">6.0%</span></div>
-      <div class="ev-row"><span class="ev-left">🏢 TIGER 리츠부동산인프라 — 배당 7.6% + 주가 2.4%</span><span class="ev-right c-amber">기대 총수익 ~8%</span></div>
-      <div class="ev-row"><span class="ev-left">🏢 KODEX 한국부동산리츠인프라 — 배당 7.25%</span><span class="ev-right c-amber">기대 총수익 ~7.5%</span></div>
-      <div class="ev-row"><span class="ev-left">리츠 주의: 금리 상승기·해외리츠 공모가 대비 대폭 하락 선례</span><span class="ev-right" style="color:#C0392B">리스크 ⚠</span></div>
+      <div class="ev-row"><span class="ev-left">🏢 TIGER 리츠부동산인프라 — 배당 7.6%</span><span class="ev-right c-amber">기대 총수익 ~8%</span></div>
       <div class="ev-row"><span class="ev-left">채권/현금 (한은 기준금리 2.5% 기준)</span><span class="ev-right">3.5%</span></div>
-      <div class="ev-row"><span class="ev-left">포트폴리오 가중 평균 수익률</span><span class="ev-right c-gold" id="r-port-ret">—</span></div>
-      <div class="ev-row"><span class="ev-left">물가 차감 실질 수익률</span><span class="ev-right c-amber" id="r-real-ret">—</span></div>
     </div>
-
-    <div class="sec-title">목표 자산 도달 시 월 수입 계산</div>
-    <div class="card card-highlight">
-      <div class="big-label">은퇴 후 월 인출 가능액</div>
-      <div class="big-num c-green" id="r-port-monthly">—</div>
-      <div class="big-sub" id="r-port-sub">—</div>
-    </div>
-    <div class="formula" id="r-port-formula">—</div>
   </div>
 
   <!-- PANEL 3: 기간별 계획 -->
@@ -665,13 +640,64 @@
 </div>
 
 <script>
-const ASSETS = [
-  { key:'sp', label:'TIGER 미국S&P500', color:'#185FA5', ret:8.5 },
-  { key:'nq', label:'KODEX 나스닥100',  color:'#378ADD', ret:10.0 },
-  { key:'ks', label:'KODEX 코스피200',  color:'#1D9E75', ret:6.0 },
-  { key:'re', label:'리츠/부동산 ETF',  color:'#D4960A', ret:7.8 },
-  { key:'bd', label:'채권 / 현금',       color:'#3E5668', ret:3.5 },
+/* ── 포트폴리오 전략 정의 ── */
+const PORTFOLIOS = [
+  {
+    key:'conservative', name:'안정형', risk:'낮음', riskColor:'#1D9E75',
+    ret:5.8, desc:'채권 중심 + 인덱스. 변동성 최소화, 안정적 성장.',
+    etfs:[
+      {label:'TIGER 미국S&P500', color:'#185FA5', w:25, ret:8.5},
+      {label:'KODEX 코스피200', color:'#1D9E75', w:15, ret:6.0},
+      {label:'국고채·채권 ETF', color:'#3E5668', w:50, ret:3.5},
+      {label:'ACE KRX금현물', color:'#BA7517', w:10, ret:5.0},
+    ]
+  },
+  {
+    key:'balanced', name:'균형형', risk:'중간', riskColor:'#6AABFF',
+    ret:7.2, desc:'주식과 채권 6:4. 가장 검증된 전통적 배분.',
+    etfs:[
+      {label:'TIGER 미국S&P500', color:'#185FA5', w:35, ret:8.5},
+      {label:'KODEX 나스닥100', color:'#378ADD', w:10, ret:10.0},
+      {label:'KODEX 코스피200', color:'#1D9E75', w:15, ret:6.0},
+      {label:'국고채·채권 ETF', color:'#3E5668', w:30, ret:3.5},
+      {label:'ACE KRX금현물', color:'#BA7517', w:10, ret:5.0},
+    ]
+  },
+  {
+    key:'growth', name:'성장형', risk:'높음', riskColor:'#D4960A',
+    ret:8.5, desc:'주식 80%. 장기 수익 극대화, 단기 변동성 감수.',
+    etfs:[
+      {label:'TIGER 미국S&P500', color:'#185FA5', w:40, ret:8.5},
+      {label:'KODEX 나스닥100', color:'#378ADD', w:25, ret:10.0},
+      {label:'KODEX 코스피200', color:'#1D9E75', w:15, ret:6.0},
+      {label:'국고채·채권 ETF', color:'#3E5668', w:15, ret:3.5},
+      {label:'TIGER 반도체TOP10', color:'#E8644A', w:5, ret:11.0},
+    ]
+  },
+  {
+    key:'income', name:'인컴형 (배당)', risk:'중간', riskColor:'#D4960A',
+    ret:7.0, desc:'리츠+배당 ETF 중심. 월 현금흐름 극대화, FIRE 후 생활비 모델.',
+    etfs:[
+      {label:'TIGER 미국S&P500', color:'#185FA5', w:25, ret:8.5},
+      {label:'TIGER 리츠부동산인프라', color:'#D4960A', w:25, ret:7.8},
+      {label:'TIGER 미국배당다우존스', color:'#1D9E75', w:25, ret:7.0},
+      {label:'국고채·채권 ETF', color:'#3E5668', w:15, ret:3.5},
+      {label:'KODEX 미국부동산리츠(H)', color:'#BA7517', w:10, ret:7.5},
+    ]
+  },
+  {
+    key:'aggressive', name:'공격형', risk:'매우 높음', riskColor:'#C0392B',
+    ret:9.5, desc:'기술주·성장주 집중. 최대 수익 가능성, 최대 변동성.',
+    etfs:[
+      {label:'KODEX 나스닥100', color:'#378ADD', w:40, ret:10.0},
+      {label:'TIGER 미국S&P500', color:'#185FA5', w:25, ret:8.5},
+      {label:'TIGER 반도체TOP10', color:'#E8644A', w:20, ret:11.0},
+      {label:'KODEX 코스피200', color:'#1D9E75', w:15, ret:6.0},
+    ]
+  },
 ];
+
+let selectedPort = 'balanced';
 
 function g(id){ return document.getElementById(id); }
 function num(id){ return parseFloat(g(id).value) || 0; }
@@ -684,10 +710,117 @@ function updateAssetUnit(){
     u.textContent = '만원 = ' + (jo%1===0?jo.toFixed(0):jo.toFixed(1)) + '조원';
   } else if(v >= 10000){
     const eok = v / 10000;
-    u.textContent = '만원 = ' + (eok%1===0?eok.toFixed(0):eok.toLocaleString('ko-KR',{maximumFractionDigits:1})) + '억원';
+    u.textContent = '만원 = ' + (eok%1===0?eok.toFixed(0):eok.toFixed(1)) + '억원';
   } else {
     u.textContent = '만원';
   }
+}
+
+function getSelectedPort(){
+  return PORTFOLIOS.find(p=>p.key===selectedPort) || PORTFOLIOS[1];
+}
+
+function renderPortCompare(){
+  const assetW = num('i-asset') * 10000;
+  const age = num('i-age');
+  const income = num('i-income');
+  const passive = num('i-passive');
+  const living = num('i-living');
+  const retire = num('i-retire');
+  const swr = age <= 40 ? 3.5 : 4.0;
+  const targetW = retire * 12 * 10000 / (swr / 100);
+  const gapW = Math.max(0, targetW - assetW);
+  const savePoss = (income + passive - living) * 10000;
+
+  const grid = g('port-compare-grid');
+  grid.innerHTML = PORTFOLIOS.map(p => {
+    const years = gapW > 0 && savePoss > 0 ? calcYearsToFire(targetW, assetW, p.ret, savePoss) : 0;
+    const retireAge = Math.round(age + years);
+    const sel = p.key === selectedPort;
+    return `
+    <div onclick="selectPortfolio('${p.key}')" style="
+      background:${sel?'rgba(42,111,219,.08)':'var(--surface)'};
+      border:1px solid ${sel?'var(--accent)':'var(--border)'};
+      border-radius:var(--radius);padding:16px 20px;cursor:pointer;
+      transition:border-color .18s;position:relative;overflow:hidden;
+    " ${sel?'':'onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'"'}>
+      ${sel?'<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--gold))"></div>':''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px;font-weight:700">${p.name}</span>
+            <span style="font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid ${p.riskColor};color:${p.riskColor};font-family:'DM Mono',monospace">리스크 ${p.risk}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">${p.desc}</div>
+          <div style="display:flex;height:12px;border-radius:4px;overflow:hidden;margin-top:8px">
+            ${p.etfs.map(e=>`<div style="background:${e.color};width:${e.w}%"></div>`).join('')}
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">
+            ${p.etfs.map(e=>`<span><span class="dot" style="background:${e.color};width:7px;height:7px"></span>${e.label.split(' ').pop()} ${e.w}%</span>`).join('')}
+          </div>
+        </div>
+        <div style="text-align:right;min-width:120px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">기대 수익률</div>
+          <div style="font-size:24px;font-weight:700;color:#E8C84A">${p.ret}%</div>
+          ${gapW > 0 && savePoss > 0 ? `
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:8px">FIRE 도달</div>
+          <div style="font-size:18px;font-weight:700;color:${years<=10?'#1D9E75':years<=20?'#6AABFF':'#D4960A'}">${years > 50 ? '50년+' : years.toFixed(1)+'년'}</div>
+          <div style="font-size:11px;color:var(--text3)">${years > 50 ? '' : retireAge+'세 은퇴'}</div>
+          ` : `<div style="font-size:11px;color:var(--text3);margin-top:8px">${assetW>=targetW?'이미 달성':'자산 입력 필요'}</div>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 선택된 포트폴리오 상세
+  const p = getSelectedPort();
+  const detail = g('port-detail');
+  detail.style.display = '';
+
+  // 바
+  g('port-bar').innerHTML = p.etfs.map(e =>
+    `<div class="port-seg" style="background:${e.color};width:${e.w}%">${e.w>=15?e.label.split(' ').pop():''}</div>`
+  ).join('');
+
+  // 테이블
+  const tbody = g('port-tbody');
+  tbody.innerHTML = p.etfs.map(e => `<tr>
+    <td style="padding:9px 20px"><span class="dot" style="background:${e.color}"></span>${e.label}</td>
+    <td style="padding:9px 8px">${e.w}%</td>
+    <td style="padding:9px 8px">${e.ret}%</td>
+    <td style="padding:9px 20px 9px 8px;text-align:right;color:#6AABFF">${(e.w/100*e.ret).toFixed(2)}%</td>
+  </tr>`).join('');
+  g('total-ret').textContent = p.ret.toFixed(1) + '%';
+
+  const inflation = num('i-inflation');
+  const drawW = targetW * swr / 100 / 12;
+  g('r-port-monthly').textContent = fmtMon(drawW);
+  g('r-port-sub').textContent = `포트폴리오 수익률 ${p.ret}% / SWR ${swr}% / 실질 ${(p.ret-inflation).toFixed(1)}%`;
+  g('r-port-formula').innerHTML =
+    `목표 자산 <span>${fmtW(targetW)}</span> × SWR <span>${swr}%</span> ÷ 12개월 = 월 <span>${fmtMon(drawW)}</span><br>` +
+    `포트폴리오 수익률 <span>${p.ret}%</span> − 물가 <span>${inflation}%</span> = 실질 <span>${(p.ret-inflation).toFixed(1)}%</span>`;
+}
+
+function calcYearsToFire(target, current, retPct, monthlySave){
+  if(current >= target) return 0;
+  const r = retPct / 100 / 12;
+  const gap = target - current;
+  // 이진 탐색으로 연수 찾기
+  let lo=0, hi=60;
+  for(let i=0;i<50;i++){
+    const mid = (lo+hi)/2;
+    const n = mid*12;
+    const fv = current*Math.pow(1+r,n) + (r>0.00001 ? monthlySave*(Math.pow(1+r,n)-1)/r : monthlySave*n);
+    if(fv >= target) hi = mid; else lo = mid;
+  }
+  return hi;
+}
+
+function selectPortfolio(key){
+  selectedPort = key;
+  fpSave();
+  renderPortCompare();
+  run();
 }
 
 function fmtW(n){
@@ -701,6 +834,7 @@ function fmtMon(n){ return Math.round(n/10000).toLocaleString('ko-KR') + '만원
 function showTab(idx){
   document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  if(idx===2) renderPortCompare();
   if(idx===4) renderTestBudget();
 }
 
@@ -911,23 +1045,16 @@ function renderJournal(){
 function renderTestBudget(){
   const asset = num('i-asset') * 10000;
   const budget = asset * 0.01;
-  g('t-budget').textContent = fmtW(budget) + ' (자산 ' + num('i-asset').toLocaleString() + '만원의 1%)';
+  g('t-budget').textContent = fmtW(budget) + ' (자산 ' + fmtW(asset) + '의 1%)';
 }
 
 
 
-function syncPort(){
-  const keys = ['sp','nq','ks','re','bd'];
-  const total = keys.reduce((a,k) => a + (parseFloat(g('p-'+k).value)||0), 0);
-  const msg = g('port-sum-msg');
-  if(Math.abs(total-100) > 0.01){
-    msg.textContent = `합계: ${total}% — 100%가 되도록 맞춰주세요`;
-    msg.style.color = '#D4960A';
-  } else {
-    msg.textContent = '합계: 100% ✓';
-    msg.style.color = '#1D9E75';
-  }
+function syncAll(){
+  updateAssetUnit();
+  fpSave();
   run();
+  renderPortCompare();
 }
 
 function calcMonthlySave(target, current, annualRetPct, years){
@@ -947,16 +1074,13 @@ function run(){
   const living    = num('i-living');
   const retire    = num('i-retire');
   const inflation = num('i-inflation');
+  const passive   = num('i-passive');
 
   const assetW = assetM * 10000;
+  const passiveW = passive * 10000;
 
-  // Portfolio
-  const keys = ['sp','nq','ks','bd'];
-  const totalW = keys.reduce((a,k) => a + (parseFloat(g('p-'+k).value)||0), 0);
-  const portRet = ASSETS.reduce((a,as) => {
-    const w = totalW > 0 ? (parseFloat(g('p-'+as.key).value)||0)/totalW*100 : 0;
-    return a + w/100 * as.ret;
-  }, 0);
+  // Portfolio — 선택된 전략의 수익률 사용
+  const portRet = getSelectedPort().ret;
   const realRet = portRet - inflation;
   const swr = age <= 40 ? 3.5 : 4.0;
 
@@ -966,6 +1090,40 @@ function run(){
   const gapW = Math.max(0, targetW - assetW);
   const drawW = targetW * swr / 100 / 12;
   const pct = Math.min(Math.round(assetW / targetW * 100), 100);
+
+  // 저축 여력 = (근로소득 + 패시브 인컴) - 생활비
+  const savePoss = (income + passive - living) * 10000;
+  const totalIncome = income + passive;
+
+  // ── 패시브 인컴 요약 (Panel 0) ──
+  const psum = g('passive-summary');
+  if(passive > 0){
+    const yieldPct = assetM > 0 ? (passive * 12 / assetM * 100).toFixed(1) : '—';
+    const coverPct = Math.round(passive / living * 100);
+    const coverColor = coverPct >= 100 ? '#1D9E75' : coverPct >= 50 ? '#6AABFF' : '#D4960A';
+    psum.style.display = '';
+    psum.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">자산 대비 현금흐름률</div>
+          <div style="font-size:18px;font-weight:700;color:#E8C84A">${yieldPct}%/년</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">= 연 ${(passive*12).toLocaleString()}만원</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">생활비 충당률</div>
+          <div style="font-size:18px;font-weight:700;color:${coverColor}">${coverPct}%</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${passive}만 / ${living}만원</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">월 저축 여력</div>
+          <div style="font-size:18px;font-weight:700;color:${savePoss>0?'#1D9E75':'#C0392B'}">${Math.round(savePoss/10000).toLocaleString()}만원</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">근로 ${income}만 + 패시브 ${passive}만 − 생활비 ${living}만</div>
+        </div>
+      </div>
+      ${coverPct >= 100 ? '<div style="background:rgba(29,158,117,.07);border:1px solid rgba(29,158,117,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#1D9E75;line-height:1.6;margin-top:8px">패시브 인컴이 이미 생활비를 넘었습니다. 근로소득 없이도 기본 생활이 가능한 상태예요.</div>' : ''}`;
+  } else {
+    psum.style.display = 'none';
+  }
 
   // ── PANEL 1 ──
   g('f-formula').innerHTML =
@@ -988,37 +1146,7 @@ function run(){
     ? `현재 ${age}세로 은퇴 후 40년 이상 자산을 유지해야 합니다. 3.5% 보수적 인출률을 적용하면 4% 대비 목표 자산이 ${fmtW(targetW - annualRetireW/0.04)}만큼 높아지지만 고갈 위험이 크게 낮아집니다.`
     : `현재 ${age}세로 표준 4% 인출률을 적용했습니다. 40년+ 운용이 필요하다면 3.5%를 고려하세요.`;
 
-  // ── PANEL 2 ──
-  ASSETS.forEach(a => {
-    const seg = g('seg-'+a.key);
-    if(seg) seg.style.width = (totalW > 0 ? (parseFloat(g('p-'+a.key).value)||0)/totalW*100 : 0) + '%';
-    if(seg) seg.textContent = ((parseFloat(g('p-'+a.key).value)||0) >= 12) ? a.label.split(' ').pop() : '';
-  });
-
-  const tbody = g('port-tbody');
-  tbody.innerHTML = '';
-  ASSETS.forEach(a => {
-    const w = totalW > 0 ? (parseFloat(g('p-'+a.key).value)||0)/totalW*100 : 0;
-    const contrib = w / 100 * a.ret;
-    const monthly = targetW * contrib / 100 / 12;
-    tbody.innerHTML += `<tr>
-      <td style="padding:9px 20px"><span class="dot" style="background:${a.color}"></span>${a.label}</td>
-      <td style="padding:9px 8px">${Math.round(w)}%</td>
-      <td style="padding:9px 8px">${a.ret}%</td>
-      <td style="padding:9px 8px;color:#6AABFF">${contrib.toFixed(2)}%</td>
-      <td style="padding:9px 20px 9px 8px;text-align:right;color:#1D9E75">${fmtMon(monthly)}</td>
-    </tr>`;
-  });
-  g('total-ret').textContent = portRet.toFixed(2) + '%';
-  g('total-monthly').textContent = fmtMon(targetW * portRet / 100 / 12);
-  g('r-port-ret').textContent = portRet.toFixed(2) + '%';
-  g('r-real-ret').textContent = realRet.toFixed(2) + '% (' + portRet.toFixed(1) + '% − ' + inflation + '%)';
-
-  g('r-port-monthly').textContent = fmtMon(drawW);
-  g('r-port-sub').textContent = `포트폴리오 수익률 ${portRet.toFixed(1)}% / SWR ${swr}% / 실질 수익률 ${realRet.toFixed(1)}%`;
-  g('r-port-formula').innerHTML =
-    `목표 자산 <span>${fmtW(targetW)}</span> × SWR <span>${swr}%</span> ÷ 12개월 = 월 <span>${fmtMon(drawW)}</span><br>` +
-    `포트폴리오 수익률 <span>${portRet.toFixed(1)}%</span> − 물가 <span>${inflation}%</span> = 실질 <span>${realRet.toFixed(1)}%</span>`;
+  // ── PANEL 2: renderPortCompare()에서 별도 처리 ──
 
   // ── PANEL 3 ──
   g('p-cur').textContent = fmtW(assetW);
@@ -1027,10 +1155,9 @@ function run(){
   g('p-pct').textContent = pct + '%';
   g('p-gap').textContent = gapW > 0 ? fmtW(gapW) : '이미 달성!';
 
-  const savePoss = (income - living) * 10000;
-  const saveRate = income > 0 ? Math.round(savePoss / (income*10000) * 100) : 0;
+  const saveRate = totalIncome > 0 ? Math.round(savePoss / (totalIncome*10000) * 100) : 0;
   g('r-save-possible').textContent = fmtMon(Math.max(0, savePoss));
-  g('r-saverate').textContent = saveRate + '% (월 ' + income.toLocaleString() + '만원 기준)';
+  g('r-saverate').textContent = saveRate + '% (월 수입 ' + totalIncome.toLocaleString() + '만원 기준' + (passive > 0 ? ', 패시브 ' + passive + '만 포함' : '') + ')';
 
   const periods = [5, 10, 15, 20];
   const grid = g('period-grid');
@@ -1038,7 +1165,6 @@ function run(){
   periods.forEach(yr => {
     const monthly = calcMonthlySave(targetW, assetW, portRet, yr);
     const retireAge = Math.round(age + yr);
-    const isOk = monthly <= savePoss * 1.0;
     const cls = monthly <= 0 ? 'feasible' : monthly <= savePoss * 0.7 ? 'feasible' : monthly <= savePoss ? 'hard' : 'tough';
     const label = monthly <= 0 ? '이미 달성' : cls === 'feasible' ? '여유 가능' : cls === 'hard' ? '빡빡하게 가능' : '현수입 초과';
     const div = document.createElement('div');
@@ -1049,7 +1175,7 @@ function run(){
       <div class="period-yr">${yr}년</div>
       <div class="period-monthly ${cls}">${monthly <= 0 ? '0원' : fmtMon(monthly)}</div>
       <div class="period-age">${retireAge}세 은퇴 · ${label}</div>`;
-    div.onclick = () => selectPlan(yr, monthly, portRet, retireAge, targetW, assetW, income);
+    div.onclick = () => selectPlan(yr, monthly, portRet, retireAge, targetW, assetW, totalIncome);
     grid.appendChild(div);
   });
 }
@@ -1089,8 +1215,8 @@ function selectPlan(yr, monthly, portRet, retireAge, target, current, income){
 
 // init
 /* ── localStorage 저장/복원 ── */
-const FP_STORAGE_KEY = 'fire-planner-inputs';
-const FP_FIELDS = ['i-age','i-asset','i-income','i-living','i-retire','i-inflation','p-sp','p-nq','p-ks','p-re','p-bd'];
+const FP_STORAGE_KEY = 'fire-planner-inputs-v3';
+const FP_FIELDS = ['i-age','i-asset','i-income','i-living','i-retire','i-inflation','i-passive'];
 
 function fpReset(){
   if(!confirm('모든 입력값을 초기화하시겠습니까?')) return;
@@ -1099,7 +1225,7 @@ function fpReset(){
 }
 
 function fpSave(){
-  const data = {};
+  const data = { _port: selectedPort };
   FP_FIELDS.forEach(id => { data[id] = g(id).value; });
   try { localStorage.setItem(FP_STORAGE_KEY, JSON.stringify(data)); } catch(e){}
 }
@@ -1111,6 +1237,7 @@ function fpLoad(){
     FP_FIELDS.forEach(id => {
       if(data[id] !== undefined && data[id] !== '') g(id).value = data[id];
     });
+    if(data._port) selectedPort = data._port;
   } catch(e){}
 }
 
@@ -1120,10 +1247,10 @@ FP_FIELDS.forEach(id => {
 });
 
 fpLoad();
-run();
-syncPort();
-renderJournal();
 updateAssetUnit();
+run();
+renderPortCompare();
+renderJournal();
 </script>
 </body>
 </html>
