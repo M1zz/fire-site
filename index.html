@@ -34,6 +34,7 @@ h1 em{color:#E8C84A;font-style:normal}
 /* Cards */
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:48px}
 @media(max-width:480px){.cards{grid-template-columns:1fr}}
+.card-c::before{background:linear-gradient(90deg,#1D9E75,#D4960A)}
 .card{background:#111E2D;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;text-decoration:none;color:inherit;transition:border-color .18s,transform .15s;display:block;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .card-a::before{background:linear-gradient(90deg,#2A6FDB,#E8C84A)}
@@ -124,6 +125,17 @@ h1 em{color:#E8C84A;font-style:normal}
         <span class="tag tag-blue">수익률 진단</span>
         <span class="tag tag-purple">자유 설계</span>
         <span class="tag tag-amber">로드맵</span>
+      </div>
+    </a>
+    <a href="etf-strategy.html" class="card card-c" style="grid-column:1/-1">
+      <div class="card-icon">📊</div>
+      <div class="card-title">ETF 투자 전략</div>
+      <div class="card-desc">SCHD vs JEPI 비교 &middot; 배당 수익 시뮬레이션 &middot; 한국 ETF 세금 구조 &middot; ISA&middot;연금저축 계좌 전략</div>
+      <div class="card-tags">
+        <span class="tag tag-green">ETF 비교</span>
+        <span class="tag tag-blue">수익 계산기</span>
+        <span class="tag tag-amber">세금 구조</span>
+        <span class="tag tag-purple">계좌 전략</span>
       </div>
     </a>
   </div>

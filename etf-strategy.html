@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF 투자 전략 — 개발자리</title>
+<meta name="description" content="SCHD vs JEPI 비교, 배당 수익 시뮬레이션, 한국 ETF 세금 구조, ISA·연금저축 계좌 전략. FIRE를 위한 ETF 가이드.">
+<meta property="og:title" content="ETF 투자 전략 — 개발자리">
+<meta property="og:description" content="세금이 수익률을 바꾼다. 계좌 순서가 전략이다. ETF 비교부터 절세 전략까지.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0C1520;--surface:#111E2D;--surface2:#162536;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#E8EFF7;--text2:#7A96AB;--text3:#3E5668;--accent:#2A6FDB;--green:#1D9E75;--amber:#D4960A;--red:#C0392B;--gold:#E8C84A;--purple:#7C6FDB;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.app{max-width:780px;margin:0 auto;padding:40px 20px 80px}
+
+/* header */
+.back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);text-decoration:none;margin-bottom:14px;transition:color .15s}
+.back:hover{color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.25);border-radius:20px;padding:4px 12px;font-size:11px;color:#5DCAA5;letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:16px}
+.pulse{width:6px;height:6px;background:var(--green);border-radius:50%;animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-size:clamp(24px,5vw,36px);font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-bottom:8px}
+h1 em{color:var(--gold);font-style:normal}
+.subtitle{color:var(--text2);font-size:14px;margin-bottom:32px;line-height:1.7}
+
+/* tabs */
+.tab-wrap{position:sticky;top:0;z-index:10;background:var(--bg);padding:12px 0 0;margin-bottom:28px}
+.tab-bar{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:4px}
+.tab{flex:1;padding:9px 6px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);border-radius:8px;transition:all .18s;font-family:'Pretendard',sans-serif}
+.tab.active{background:var(--accent);color:#fff}
+.tab:hover:not(.active){background:var(--surface2);color:var(--text)}
+.panel{display:none;animation:fadeIn .2s ease}.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* common */
+.sec{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-family:'DM Mono',monospace;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sec:first-child{margin-top:0}
+.note{font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:12px}
+.card-hl{background:linear-gradient(135deg,#0D1E30,#091520);border:1px solid rgba(42,111,219,.3);position:relative;overflow:hidden}
+.card-hl::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--gold))}
+
+/* ev table */
+.ev{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.ev-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;gap:12px}
+.ev-row:last-child{border-bottom:none}
+.ev-l{color:var(--text2);flex:1;line-height:1.5}.ev-r{font-weight:600;text-align:right;white-space:nowrap;font-family:'DM Mono',monospace}
+.c-g{color:var(--green)}.c-b{color:#6AABFF}.c-a{color:var(--amber)}.c-r{color:var(--red)}.c-go{color:var(--gold)}.c-p{color:#A89FFF}
+
+/* grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:480px){.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+.mini{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px}
+.mini-l{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px}
+.mini-v{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.mini-s{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* bar */
+.bar-wrap{height:20px;border-radius:var(--rs);display:flex;overflow:hidden;margin:10px 0}
+.bar-seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:rgba(255,255,255,.85)}
+
+/* input */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-size:12px;color:var(--text2)}
+.field-row{display:flex;align-items:center;gap:8px}
+.num-in{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Mono',monospace;outline:none;transition:border-color .15s;max-width:160px}
+.num-in:focus{border-color:var(--accent)}
+.field-unit{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
+
+/* formula */
+.formula{background:rgba(42,111,219,.05);border:1px solid rgba(42,111,219,.14);border-radius:var(--rs);padding:12px 16px;font-size:12px;color:var(--text2);line-height:1.9;font-family:'DM Mono',monospace;margin:10px 0}
+.formula span{color:var(--text);font-weight:600}
+
+/* warn/ok */
+.warn{background:rgba(212,150,10,.07);border:1px solid rgba(212,150,10,.2);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--amber);line-height:1.6;margin-bottom:12px}
+.ok{background:rgba(29,158,117,.07);border:1px solid rgba(29,158,117,.2);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--green);line-height:1.6;margin-bottom:12px}
+.info{background:rgba(42,111,219,.07);border:1px solid rgba(42,111,219,.2);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:#6AABFF;line-height:1.6;margin-bottom:12px}
+
+/* etf card */
+.etf-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:border-color .18s;margin-bottom:8px}
+.etf-card:hover,.etf-card.sel{border-color:var(--accent)}
+.etf-card.sel{background:rgba(42,111,219,.06)}
+
+/* btn */
+.btn{padding:10px 20px;font-size:13px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-family:'Pretendard',sans-serif;transition:opacity .15s}
+.btn:hover{opacity:.88}
+
+/* footer */
+.footer{text-align:center;font-size:11px;color:var(--text3);margin-top:48px;line-height:1.8}
+.footer a{color:var(--text2);text-decoration:none}
+
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<a href="index.html" class="back">&larr; FIRE 계산기 모음</a>
+<div class="badge"><div class="pulse"></div>ETF 전략 &middot; 2026년 3월 기준</div>
+<h1>ETF 투자 전략<br><em>세금이 수익률을 바꾼다</em></h1>
+<p class="subtitle">ETF 비교 &middot; 배당 수익 시뮬레이션 &middot; 세금 구조 &middot; 계좌 전략까지</p>
+
+<!-- TABS -->
+<div class="tab-wrap">
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab(0)">① ETF 비교</button>
+    <button class="tab" onclick="showTab(1)">② 수익 계산기</button>
+    <button class="tab" onclick="showTab(2)">③ 세금 구조</button>
+    <button class="tab" onclick="showTab(3)">④ 계좌 전략</button>
+  </div>
+</div>
+
+<!-- ── TAB 0: ETF 비교 ── -->
+<div class="panel active" id="p0">
+  <div class="sec">배당 ETF 핵심 비교 — SCHD vs JEPI</div>
+  <p class="note">같은 "배당 ETF"라도 성격이 완전히 다릅니다. 지금 현금이 필요한가, 10년 복리를 노리는가에 따라 선택이 달라집니다.</p>
+
+  <div class="g2">
+    <div class="card" style="border-top:2px solid #1D9E75">
+      <div style="font-size:20px;margin-bottom:6px">📈</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">SCHD</div>
+      <div style="font-size:11px;color:var(--green);font-family:'DM Mono',monospace;margin-bottom:10px">배당 성장형 &middot; 분기 배당</div>
+      <div class="ev" style="margin-bottom:0">
+        <div class="ev-row"><span class="ev-l">배당 수익률</span><span class="ev-r c-g">~3.5%</span></div>
+        <div class="ev-row"><span class="ev-l">배당 성장률 (연)</span><span class="ev-r c-go">~11%</span></div>
+        <div class="ev-row"><span class="ev-l">총수익률 (10년 연평균)</span><span class="ev-r c-b">~11%</span></div>
+        <div class="ev-row"><span class="ev-l">2022년 나스닥 -33% 시</span><span class="ev-r c-g">-5% 방어</span></div>
+        <div class="ev-row"><span class="ev-l">운용 전략</span><span class="ev-r">배당 퀄리티 100종목</span></div>
+        <div class="ev-row"><span class="ev-l">보수</span><span class="ev-r">0.06%</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--amber)">
+      <div style="font-size:20px;margin-bottom:6px">💵</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">JEPI</div>
+      <div style="font-size:11px;color:var(--amber);font-family:'DM Mono',monospace;margin-bottom:10px">고배당 인컴형 &middot; 월배당</div>
+      <div class="ev" style="margin-bottom:0">
+        <div class="ev-row"><span class="ev-l">배당 수익률</span><span class="ev-r c-a">~8%</span></div>
+        <div class="ev-row"><span class="ev-l">배당 성장률 (연)</span><span class="ev-r" style="color:var(--text3)">거의 없음</span></div>
+        <div class="ev-row"><span class="ev-l">총수익률 (3년 연평균)</span><span class="ev-r c-b">~8%</span></div>
+        <div class="ev-row"><span class="ev-l">하락장 방어</span><span class="ev-r c-a">커버드콜로 완충</span></div>
+        <div class="ev-row"><span class="ev-l">운용 전략</span><span class="ev-r">S&P500 + 옵션 프리미엄</span></div>
+        <div class="ev-row"><span class="ev-l">보수</span><span class="ev-r">0.35%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-hl">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">선택 기준</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--green)">SCHD</strong> — 10년+ 장기 복리. 배당이 매년 11%씩 자라서, 10년 후에는 원금 대비 배당률이 9%를 넘어요. 지금 당장 현금은 적지만 복리가 압도적.<br>
+      <strong style="color:var(--amber)">JEPI</strong> — 지금 당장 월 현금흐름이 필요한 사람. 은퇴 직후 생활비 충당용. 단, 주가 상승이 제한적이라 장기 자산 성장은 약해요.
+    </div>
+  </div>
+
+  <div class="sec">국내 상장 vs 미국 직접 매수</div>
+  <div class="ev">
+    <div class="ev-row"><span class="ev-l">국내 상장 SCHD (TIGER 미국배당다우존스)</span><span class="ev-r c-b">ISA/연금저축 가능</span></div>
+    <div class="ev-row"><span class="ev-l">미국 직접 SCHD</span><span class="ev-r c-a">미국 배당세 15% 원천징수</span></div>
+    <div class="ev-row"><span class="ev-l">국내 상장 JEPI (TIGER 미국배당+7%프리미엄)</span><span class="ev-r c-b">ISA/연금저축 가능</span></div>
+    <div class="ev-row"><span class="ev-l">미국 직접 JEPI</span><span class="ev-r c-a">옵션 프리미엄 30% 과세</span></div>
+  </div>
+  <div class="info">2025년부터 해외 ETF 선환급 절차 폐지 — 이제는 해외 세금 차감 후 금액 기준으로 국내 과세소득이 산정됩니다. 국내 상장 ETF가 세금 면에서 유리한 경우가 많아요.</div>
+
+  <div class="sec">주요 배당 ETF 한눈에</div>
+  <div class="ev">
+    <div class="ev-row"><span class="ev-l">TIGER 미국배당다우존스</span><span class="ev-r c-g">배당 3.5% &middot; 성장형</span></div>
+    <div class="ev-row"><span class="ev-l">TIGER 미국배당+7%프리미엄</span><span class="ev-r c-a">배당 ~8% &middot; 커버드콜</span></div>
+    <div class="ev-row"><span class="ev-l">TIGER 리츠부동산인프라</span><span class="ev-r c-a">배당 7.6% &middot; 월배당</span></div>
+    <div class="ev-row"><span class="ev-l">KODEX 미국배당프리미엄액티브</span><span class="ev-r c-a">배당 ~7% &middot; 커버드콜</span></div>
+    <div class="ev-row"><span class="ev-l">TIGER 미국S&P500</span><span class="ev-r c-b">배당 1.3% &middot; 성장형</span></div>
+    <div class="ev-row"><span class="ev-l">KODEX 나스닥100</span><span class="ev-r c-b">배당 0.5% &middot; 고성장</span></div>
+  </div>
+</div>
+
+<!-- ── TAB 1: 수익 계산기 ── -->
+<div class="panel" id="p1">
+  <div class="sec">배당 수익 시뮬레이션</div>
+  <p class="note">투자 금액과 ETF를 선택하면 연도별 배당 수입과 자산 성장을 시뮬레이션합니다.</p>
+
+  <div class="g2">
+    <div class="field">
+      <label>투자 금액</label>
+      <div class="field-row"><input type="number" class="num-in" id="sim-amount" value="5000" step="500" oninput="simulate()"><span class="field-unit">만원</span></div>
+    </div>
+    <div class="field">
+      <label>추가 월 적립</label>
+      <div class="field-row"><input type="number" class="num-in" id="sim-monthly" value="100" step="10" oninput="simulate()"><span class="field-unit">만원/월</span></div>
+    </div>
+    <div class="field">
+      <label>투자 기간</label>
+      <div class="field-row"><input type="number" class="num-in" id="sim-years" value="10" min="1" max="30" oninput="simulate()"><span class="field-unit">년</span></div>
+    </div>
+    <div class="field">
+      <label>배당 재투자</label>
+      <div class="field-row">
+        <select class="num-in" id="sim-reinvest" onchange="simulate()" style="cursor:pointer">
+          <option value="1">전액 재투자</option>
+          <option value="0">배당 수령 (재투자 안 함)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">ETF 선택 (클릭해서 비교)</div>
+  <div id="sim-etf-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
+
+  <div id="sim-result" style="display:none">
+    <div class="sec">시뮬레이션 결과</div>
+    <div class="g3" id="sim-summary"></div>
+    <div id="sim-compare" style="margin-bottom:14px"></div>
+    <div class="sec">연도별 상세</div>
+    <div id="sim-table"></div>
+  </div>
+</div>
+
+<!-- ── TAB 2: 세금 구조 ── -->
+<div class="panel" id="p2">
+  <div class="sec">한국 ETF 세금 구조 — 2025/2026년 기준</div>
+  <p class="note">같은 수익률이라도 세금 구조에 따라 실제 손에 쥐는 금액이 달라집니다.</p>
+
+  <div class="card card-hl">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">핵심 원칙</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--gold)">세금이 수익률을 바꾼다.</strong> 연 8% 수익이라도 세금 15.4% 내면 실질 6.8%. ISA에 넣으면 비과세 구간 덕에 실질 7.5%+. 같은 ETF라도 어떤 계좌에 넣느냐가 수익률 차이를 만듭니다.
+    </div>
+  </div>
+
+  <div class="sec">과세 유형별 정리</div>
+  <div class="ev">
+    <div class="ev-row"><span class="ev-l"><strong style="color:var(--text)">국내 상장 해외 ETF</strong> (TIGER S&P500 등)</span><span class="ev-r">배당소득세 15.4%</span></div>
+    <div class="ev-row"><span class="ev-l">매매 차익</span><span class="ev-r c-g">비과세 (2025년까지)</span></div>
+    <div class="ev-row"><span class="ev-l">2026년 금투세 시행 시</span><span class="ev-r c-a">매매차익 22% (5천만 초과)</span></div>
+  </div>
+  <div class="ev">
+    <div class="ev-row"><span class="ev-l"><strong style="color:var(--text)">미국 직접 매수 ETF</strong> (SCHD, JEPI 등)</span><span class="ev-r">미국 배당세 15% 원천징수</span></div>
+    <div class="ev-row"><span class="ev-l">매매 차익</span><span class="ev-r c-a">양도소득세 22% (250만 초과)</span></div>
+    <div class="ev-row"><span class="ev-l">JEPI 옵션 프리미엄</span><span class="ev-r c-r">미국에서 30% 원천징수</span></div>
+  </div>
+
+  <div class="sec">2025년 세법 변경 포인트</div>
+  <div class="ev">
+    <div class="ev-row"><span class="ev-l">해외 ETF 선환급 절차 폐지</span><span class="ev-r c-a">2025.1~</span></div>
+    <div class="ev-row"><span class="ev-l">의미: 해외 세금 차감 후 금액 기준 국내 과세</span><span class="ev-r">이중과세 일부 해소</span></div>
+    <div class="ev-row"><span class="ev-l">ISA 납입 한도 확대</span><span class="ev-r c-g">연 4,000만원</span></div>
+    <div class="ev-row"><span class="ev-l">ISA 비과세 한도</span><span class="ev-r c-g">최대 1,000만원</span></div>
+  </div>
+
+  <div class="sec">실효 세율 비교 (배당 100만원 수령 시)</div>
+  <div class="g3">
+    <div class="mini">
+      <div class="mini-l">일반계좌</div>
+      <div class="mini-v c-r">15.4%</div>
+      <div class="mini-s">실수령 84.6만원</div>
+    </div>
+    <div class="mini">
+      <div class="mini-l">ISA 계좌</div>
+      <div class="mini-v c-g">0~9.9%</div>
+      <div class="mini-s">비과세 한도 내 0%</div>
+    </div>
+    <div class="mini">
+      <div class="mini-l">연금저축</div>
+      <div class="mini-v c-b">3.3~5.5%</div>
+      <div class="mini-s">55세 이후 연금 수령 시</div>
+    </div>
+  </div>
+  <div class="warn">금융소득 연 2,000만원 초과 시 종합과세 대상 — 최대 49.5% 세율. ISA·연금저축으로 분산하면 종합과세 진입을 늦출 수 있습니다.</div>
+</div>
+
+<!-- ── TAB 3: 계좌 전략 ── -->
+<div class="panel" id="p3">
+  <div class="sec">계좌 순서가 전략이다</div>
+  <p class="note">어떤 계좌에 먼저 넣느냐가 수십 년 복리에서 수천만원 차이를 만듭니다.</p>
+
+  <div style="display:flex;flex-direction:column;gap:0;margin-bottom:20px">
+    <div class="card" style="border-radius:var(--r) var(--r) 0 0;border-bottom:none;border-left:3px solid var(--green)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:22px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace">1</span>
+        <div>
+          <div style="font-size:15px;font-weight:700">ISA (중개형)</div>
+          <div style="font-size:11px;color:var(--green);font-family:'DM Mono',monospace">가장 먼저 채울 것</div>
+        </div>
+      </div>
+      <div class="ev" style="margin-bottom:0">
+        <div class="ev-row"><span class="ev-l">연 납입 한도</span><span class="ev-r c-g">4,000만원</span></div>
+        <div class="ev-row"><span class="ev-l">비과세 한도</span><span class="ev-r c-g">최대 1,000만원 (서민형)</span></div>
+        <div class="ev-row"><span class="ev-l">초과분 세율</span><span class="ev-r">9.9% (분리과세)</span></div>
+        <div class="ev-row"><span class="ev-l">의무 보유</span><span class="ev-r">3년</span></div>
+        <div class="ev-row"><span class="ev-l">만기 후</span><span class="ev-r c-b">연금저축으로 이전 가능</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-radius:0;border-bottom:none;border-left:3px solid #6AABFF">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:22px;font-weight:700;color:#6AABFF;font-family:'DM Mono',monospace">2</span>
+        <div>
+          <div style="font-size:15px;font-weight:700">연금저축펀드</div>
+          <div style="font-size:11px;color:#6AABFF;font-family:'DM Mono',monospace">세액공제 + 과세 이연</div>
+        </div>
+      </div>
+      <div class="ev" style="margin-bottom:0">
+        <div class="ev-row"><span class="ev-l">연 납입 한도 (세액공제)</span><span class="ev-r c-b">600만원</span></div>
+        <div class="ev-row"><span class="ev-l">세액공제율</span><span class="ev-r c-g">13.2~16.5%</span></div>
+        <div class="ev-row"><span class="ev-l">연간 환급액</span><span class="ev-r c-g">최대 99만원</span></div>
+        <div class="ev-row"><span class="ev-l">배당세</span><span class="ev-r c-g">당장 안 냄 (과세 이연)</span></div>
+        <div class="ev-row"><span class="ev-l">55세 이후 연금 수령 시</span><span class="ev-r c-b">3.3~5.5%</span></div>
+        <div class="ev-row"><span class="ev-l">중도 인출 시</span><span class="ev-r c-r">기타소득세 16.5%</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-radius:0;border-bottom:none;border-left:3px solid var(--purple)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:22px;font-weight:700;color:var(--purple);font-family:'DM Mono',monospace">3</span>
+        <div>
+          <div style="font-size:15px;font-weight:700">IRP (개인형 퇴직연금)</div>
+          <div style="font-size:11px;color:var(--purple);font-family:'DM Mono',monospace">추가 세액공제</div>
+        </div>
+      </div>
+      <div class="ev" style="margin-bottom:0">
+        <div class="ev-row"><span class="ev-l">연금저축 포함 세액공제 한도</span><span class="ev-r c-p">900만원</span></div>
+        <div class="ev-row"><span class="ev-l">추가 공제분 (연금저축 600 + IRP 300)</span><span class="ev-r c-g">최대 148.5만원 환급</span></div>
+        <div class="ev-row"><span class="ev-l">위험자산 비중 제한</span><span class="ev-r c-a">70% 이하</span></div>
+        <div class="ev-row"><span class="ev-l">중도 인출</span><span class="ev-r c-r">거의 불가 (55세↑)</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-radius:0 0 var(--r) var(--r);border-left:3px solid var(--text3)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:22px;font-weight:700;color:var(--text3);font-family:'DM Mono',monospace">4</span>
+        <div>
+          <div style="font-size:15px;font-weight:700">일반 위탁계좌</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">한도 없음 &middot; 절세 혜택 없음</div>
+        </div>
+      </div>
+      <div class="ev" style="margin-bottom:0">
+        <div class="ev-row"><span class="ev-l">납입 한도</span><span class="ev-r">무제한</span></div>
+        <div class="ev-row"><span class="ev-l">배당소득세</span><span class="ev-r c-r">15.4%</span></div>
+        <div class="ev-row"><span class="ev-l">매매 차익</span><span class="ev-r c-g">국내 상장 ETF 비과세</span></div>
+        <div class="ev-row"><span class="ev-l">활용</span><span class="ev-r">ISA/연금 한도 초과분</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-hl">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">실전 채우기 순서 예시 (월 저축 200만원)</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.9">
+      <span style="color:var(--green)">① ISA</span> — 월 333만원 한도 (연 4,000만 ÷ 12) → 200만원 전액 ISA 우선<br>
+      <span style="color:#6AABFF">② 연금저축</span> — ISA 한도 초과 시 연금저축 월 50만원 (연 600만원 세액공제)<br>
+      <span style="color:var(--purple)">③ IRP</span> — 추가 공제 필요 시 월 25만원 (연금저축 포함 연 900만원)<br>
+      <span style="color:var(--text3)">④ 일반계좌</span> — 나머지 금액
+    </div>
+  </div>
+
+  <div class="sec">FIRE와 연결</div>
+  <div class="info">55세 전에 FIRE를 달성하려면 ISA + 일반계좌의 유동성이 핵심. 연금저축/IRP는 55세 이후 연금 수령용으로 분리하세요. 55세 이전 생활비는 ISA 만기 자금 + 일반계좌 배당으로 충당하는 2단계 전략이 현실적입니다.</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  본 자료는 참고용이며 투자 권유가 아닙니다 &middot; 세법은 수시로 변경됩니다<br>
+  Made by <a href="https://leeo25.substack.com">개발자리 (Leeo)</a> &middot; <a href="https://github.com/M1zz/fire-site">GitHub</a> &middot; 2026년 3월
+</div>
+
+</div>
+
+<script>
+function g(id){return document.getElementById(id)}
+function num(id){return parseFloat(g(id)?.value)||0}
+function fmtW(n){
+  if(n>=100000000)return(n/100000000).toFixed(1)+'억원';
+  if(n>=10000)return Math.round(n/10000).toLocaleString('ko-KR')+'만원';
+  return Math.round(n).toLocaleString('ko-KR')+'원';
+}
+function fmtM(n){return Math.round(n).toLocaleString('ko-KR')+'만원'}
+
+function showTab(i){
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  if(i===1)simulate();
+}
+
+/* ── ETF 데이터 ── */
+const ETFS=[
+  {key:'schd',label:'SCHD (TIGER 미국배당다우존스)',divYield:3.5,divGrowth:11,priceGrowth:7.5,color:'#1D9E75',type:'배당성장'},
+  {key:'jepi',label:'JEPI (TIGER 미국배당+7%프리미엄)',divYield:8,divGrowth:0,priceGrowth:0,color:'#D4960A',type:'고배당 인컴'},
+  {key:'sp500',label:'TIGER 미국S&P500',divYield:1.3,divGrowth:6,priceGrowth:8.5,color:'#185FA5',type:'시장 인덱스'},
+  {key:'reit',label:'TIGER 리츠부동산인프라',divYield:7.6,divGrowth:2,priceGrowth:2.4,color:'#BA7517',type:'리츠 월배당'},
+  {key:'nq',label:'KODEX 나스닥100',divYield:0.5,divGrowth:0,priceGrowth:10,color:'#378ADD',type:'성장형'},
+];
+
+let selectedETFs=['schd','jepi'];
+
+function renderETFList(){
+  g('sim-etf-list').innerHTML=ETFS.map(e=>{
+    const sel=selectedETFs.includes(e.key);
+    return`<div class="etf-card${sel?' sel':''}" onclick="toggleETF('${e.key}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:600">${e.label.split('(')[0]}</div>
+          <div style="font-size:11px;color:var(--text3)">${e.label.includes('(')?e.label.split('(')[1].replace(')',''):''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:700;color:${e.color}">${e.divYield}%</div>
+          <div style="font-size:10px;color:var(--text3)">${e.type}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleETF(key){
+  const i=selectedETFs.indexOf(key);
+  if(i>=0)selectedETFs.splice(i,1);else selectedETFs.push(key);
+  if(selectedETFs.length===0)selectedETFs.push(key);
+  renderETFList();simulate();
+}
+
+/* ── 시뮬레이션 ── */
+function simulate(){
+  const amt=num('sim-amount');
+  const monthly=num('sim-monthly');
+  const years=num('sim-years')||10;
+  const reinvest=g('sim-reinvest').value==='1';
+  if(!amt&&!monthly){g('sim-result').style.display='none';return;}
+  g('sim-result').style.display='';
+
+  const results=selectedETFs.map(key=>{
+    const e=ETFS.find(x=>x.key===key);
+    let totalInvested=amt*10000;
+    let shares=totalInvested;// 단순화: 가격=1로 가정, 금액 기반
+    let totalDiv=0;
+    let currentDivRate=e.divYield;
+    const rows=[];
+
+    for(let y=1;y<=years;y++){
+      // 월 적립 (연간)
+      const yearlyAdd=monthly*10000*12;
+      totalInvested+=yearlyAdd;
+
+      // 가격 성장
+      shares=shares*(1+e.priceGrowth/100)+yearlyAdd;
+
+      // 배당
+      const divAmount=shares*currentDivRate/100;
+      totalDiv+=divAmount;
+
+      if(reinvest){
+        shares+=divAmount;
+      }
+
+      // 배당성장
+      currentDivRate=currentDivRate*(1+e.divGrowth/100);
+
+      rows.push({
+        year:y,
+        totalValue:shares,
+        yearDiv:divAmount,
+        monthlyDiv:divAmount/12,
+        totalDiv,
+        totalInvested,
+        divYield:currentDivRate,
+      });
+    }
+    return{etf:e,rows,final:rows[rows.length-1]};
+  });
+
+  // 요약
+  g('sim-summary').innerHTML=results.map(r=>`
+    <div class="mini" style="border-top:2px solid ${r.etf.color}">
+      <div class="mini-l">${r.etf.label.split('(')[0]}</div>
+      <div class="mini-v" style="color:${r.etf.color}">${fmtW(r.final.totalValue)}</div>
+      <div class="mini-s">투자원금 ${fmtW(r.final.totalInvested)}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text2);line-height:1.7">
+        수익 <strong style="color:var(--green)">+${fmtW(r.final.totalValue-r.final.totalInvested)}</strong><br>
+        ${years}년차 월 배당 <strong style="color:var(--gold)">${fmtM(r.final.monthlyDiv/10000)}</strong><br>
+        누적 배당 ${fmtW(r.final.totalDiv)}
+      </div>
+    </div>
+  `).join('');
+
+  // 비교
+  if(results.length>=2){
+    const a=results[0],b=results[1];
+    const diff=a.final.totalValue-b.final.totalValue;
+    g('sim-compare').innerHTML=`<div class="formula">
+      ${years}년 후 차이: <span>${a.etf.label.split('(')[0]}</span>이 <span>${b.etf.label.split('(')[0]}</span>보다 <span style="color:${diff>0?'var(--green)':'var(--red)'}">${diff>0?'+':''}${fmtW(Math.abs(diff))}</span> ${diff>0?'더 많음':'적음'}<br>
+      월 배당 차이: <span>${fmtM(a.final.monthlyDiv/10000)}</span> vs <span>${fmtM(b.final.monthlyDiv/10000)}</span>
+    </div>`;
+  } else {
+    g('sim-compare').innerHTML='';
+  }
+
+  // 테이블
+  const r=results[0];
+  g('sim-table').innerHTML=`<div class="ev">${r.rows.map(row=>`
+    <div class="ev-row">
+      <span class="ev-l">${row.year}년차</span>
+      <span style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">
+        자산 <strong style="color:var(--text)">${fmtW(row.totalValue)}</strong>
+        &middot; 월배당 <strong style="color:var(--gold)">${fmtM(row.monthlyDiv/10000)}</strong>
+        &middot; 배당률 ${row.divYield.toFixed(1)}%
+      </span>
+    </div>
+  `).join('')}</div>`;
+}
+
+renderETFList();
+simulate();
+</script>
+</body>
+</html>
