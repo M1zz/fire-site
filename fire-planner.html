@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIRE 정밀 계산기 — 개발자리</title>
+<meta name="description" content="FIRE 목표 자산 계산, 포트폴리오 월 수입 분해, 기간별 저축 계획, 1% 테스트 포트폴리오. 한국 ETF·리츠·ISA·IRP 기준.">
+<meta property="og:title" content="FIRE 정밀 계산기 — 개발자리">
+<meta property="og:description" content="목표 자산 · 포트폴리오 월 수입 근거 · 기간별 저축 계획 · 1% 테스트 포트폴리오를 한 번에 계산합니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0C1520;
+    --surface: #111E2D;
+    --surface2: #162536;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #E8EFF7;
+    --text2: #7A96AB;
+    --text3: #3E5668;
+    --accent: #2A6FDB;
+    --accent2: #1D9E75;
+    --amber: #D4960A;
+    --red: #C0392B;
+    --gold: #E8C84A;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Layout */
+  .app { max-width: 780px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* Header */
+  .header { margin-bottom: 40px; }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(42,111,219,0.12); border: 1px solid rgba(42,111,219,0.25);
+    border-radius: 20px; padding: 4px 12px; font-size: 11px;
+    color: #6AABFF; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family: 'DM Mono', monospace; margin-bottom: 16px;
+  }
+  .live-dot { width: 6px; height: 6px; background: #1D9E75; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .header h1 { font-size: clamp(26px, 5vw, 38px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  .header h1 span { color: var(--gold); }
+  .header p { color: var(--text2); font-size: 14px; margin-top: 8px; }
+
+  /* Tabs */
+  .tab-wrap { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 0 0; margin-bottom: 28px; }
+  .tab-bar {
+    display: flex; gap: 2px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 4px;
+  }
+  .tab {
+    flex: 1; padding: 9px 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; background: none; color: var(--text2);
+    border-radius: 8px; transition: all 0.18s; font-family: 'Pretendard', sans-serif;
+  }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  /* Sections */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .sec-title {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 14px; margin-top: 28px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sec-title:first-child { margin-top: 0; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px;
+  }
+  .card-highlight {
+    background: linear-gradient(135deg, #0D1E30, #0A1B2A);
+    border: 1px solid rgba(42,111,219,0.3);
+    position: relative; overflow: hidden;
+  }
+  .card-highlight::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+  }
+
+  /* Big number */
+  .big-num { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin: 6px 0 4px; }
+  .big-label { font-size: 12px; color: var(--text2); }
+  .big-sub { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.7; }
+
+  /* Metric grid */
+  .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 480px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+  .metric {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+  }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+  .metric-val { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .metric-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  /* Input groups */
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 480px) { .input-grid { grid-template-columns: 1fr; } }
+  .input-block { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 12px; color: var(--text2); }
+  .input-row { display: flex; align-items: center; gap: 8px; }
+  .input-row input[type=number] {
+    flex: 1; min-width: 0;
+    background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); border-radius: var(--radius-sm);
+    padding: 9px 12px; font-size: 14px; font-weight: 500;
+    font-family: 'DM Mono', monospace; outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-row input[type=number]:focus { border-color: var(--accent); }
+  .input-unit { font-size: 12px; color: var(--text3); white-space: nowrap; font-family: 'DM Mono', monospace; }
+
+  /* Slider */
+  .slider-wrap { margin-bottom: 20px; }
+  .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .slider-label { font-size: 13px; color: var(--text2); }
+  .slider-val { font-size: 13px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  input[type=range] {
+    width: 100%; -webkit-appearance: none; height: 3px;
+    background: var(--surface2); border-radius: 2px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    background: var(--accent); border-radius: 50%; cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(42,111,219,0.2);
+    transition: box-shadow 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 5px rgba(42,111,219,0.3); }
+
+  /* Evidence table */
+  .ev-table { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+  .ev-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    font-size: 13px; gap: 12px;
+  }
+  .ev-row:last-child { border-bottom: none; }
+  .ev-left { color: var(--text2); flex: 1; line-height: 1.5; }
+  .ev-right { font-weight: 600; text-align: right; white-space: nowrap; font-family: 'DM Mono', monospace; }
+  .c-green { color: var(--accent2); }
+  .c-blue { color: #6AABFF; }
+  .c-amber { color: var(--amber); }
+  .c-red { color: var(--red); }
+  .c-gold { color: var(--gold); }
+
+  /* Portfolio bar */
+  .port-bar { height: 22px; border-radius: var(--radius-sm); display: flex; overflow: hidden; margin: 12px 0; }
+  .port-seg { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.85); transition: width 0.3s; }
+
+  /* Portfolio table */
+  .port-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .port-table th {
+    font-size: 11px; color: var(--text3); font-weight: 500; font-family: 'DM Mono', monospace;
+    padding: 8px 0; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .port-table th:last-child, .port-table td:last-child { text-align: right; }
+  .port-table td { padding: 9px 0; border-bottom: 1px solid var(--border); color: var(--text); }
+  .port-table tr:last-child td { border-bottom: none; }
+  .port-table tfoot td { padding-top: 10px; font-weight: 700; }
+  .dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+  /* Period cards */
+  .period-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (min-width: 480px) { .period-grid { grid-template-columns: repeat(4, 1fr); } }
+  .period-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .period-card:hover { border-color: var(--border2); }
+  .period-card.selected { border-color: var(--accent); background: rgba(42,111,219,0.08); }
+  .period-yr { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+  .period-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .period-monthly { font-size: 15px; font-weight: 700; margin-top: 6px; }
+  .period-age { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .feasible { color: var(--accent2); }
+  .hard { color: var(--amber); }
+  .tough { color: var(--red); }
+
+  /* Formula box */
+  .formula {
+    background: rgba(42,111,219,0.06); border: 1px solid rgba(42,111,219,0.15);
+    border-radius: var(--radius-sm); padding: 12px 16px;
+    font-size: 13px; color: var(--text2); line-height: 1.8;
+    font-family: 'DM Mono', monospace; margin: 10px 0;
+  }
+  .formula span { color: var(--text); font-weight: 600; }
+
+  /* Progress bar */
+  .progress-wrap { margin: 10px 0; }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* Gap visual */
+  .gap-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 22px; margin-bottom: 14px;
+  }
+  .gap-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+  .gap-side { }
+  .gap-sub { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .gap-num { font-size: 18px; font-weight: 700; }
+  .arrow { font-size: 22px; color: var(--text3); }
+
+  /* Note */
+  .note { font-size: 12px; color: var(--text3); line-height: 1.7; padding: 8px 0; }
+
+  /* Warn box */
+  .warn { background: rgba(212,150,10,0.08); border: 1px solid rgba(212,150,10,0.2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--amber); margin-bottom: 14px; line-height: 1.6; }
+  .ok { background: rgba(29,158,117,0.08); border: 1px solid rgba(29,158,117,0.2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--accent2); margin-bottom: 14px; line-height: 1.6; }
+
+  /* CTA button */
+  .btn-primary {
+    width: 100%; padding: 13px; font-size: 14px; font-weight: 600;
+    background: var(--accent); color: #fff; border: none; border-radius: var(--radius);
+    cursor: pointer; transition: opacity 0.15s; font-family: 'Pretendard', sans-serif;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+
+  /* Plan detail */
+  .plan-detail { display: none; }
+  .plan-detail.visible { display: block; }
+  .plan-detail .ev-table { margin-top: 0; }
+
+  /* Port sum msg */
+  #port-sum-msg { font-size: 12px; margin-top: 8px; font-family: 'DM Mono', monospace; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 48px; line-height: 1.8; }
+  .footer a { color: var(--text2); text-decoration: none; }
+
+  /* Dark number inputs: remove arrows */
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#7A96AB;text-decoration:none;margin-bottom:14px;transition:color .15s" onmouseover="this.style.color='#E8EFF7'" onmouseout="this.style.color='#7A96AB'">&larr; FIRE 계산기 모음</a>
+    <div class="header-badge"><div class="live-dot"></div>2026년 3월 기준 &middot; 실제 데이터 반영</div>
+    <h1>🔥 FIRE 정밀 <span>계산기</span></h1>
+    <p>목표 자산 &middot; 포트폴리오 월 수입 근거 &middot; 기간별 저축 계획을 한 번에</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-wrap">
+    <div class="tab-bar">
+      <button class="tab active" onclick="showTab(0)">① 입력</button>
+      <button class="tab" onclick="showTab(1)">② 목표 자산</button>
+      <button class="tab" onclick="showTab(2)">③ 포트폴리오</button>
+      <button class="tab" onclick="showTab(3)">④ 기간 계획</button>
+      <button class="tab" onclick="showTab(4)" style="color:#E8C84A">⑤ 1% 테스트</button>
+    </div>
+  </div>
+
+  <!-- PANEL 0: 입력 -->
+  <div class="panel active" id="panel-0">
+    <div class="sec-title">재무 현황</div>
+    <div class="input-grid">
+      <div class="input-block">
+        <span class="input-label">현재 나이</span>
+        <div class="input-row"><input type="number" id="i-age" value="32" min="20" max="65" oninput="run()"><span class="input-unit">세</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">현재 보유 자산 (순자산)</span>
+        <div class="input-row"><input type="number" id="i-asset" value="5000" min="0" max="500000" step="500" oninput="run()"><span class="input-unit">만원</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">월 수입 (세후)</span>
+        <div class="input-row"><input type="number" id="i-income" value="600" min="0" max="5000" step="50" oninput="run()"><span class="input-unit">만원</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">현재 월 생활비</span>
+        <div class="input-row"><input type="number" id="i-living" value="300" min="50" max="1000" step="10" oninput="run()"><span class="input-unit">만원</span></div>
+      </div>
+    </div>
+
+    <div class="sec-title">은퇴 설계</div>
+    <div class="input-grid">
+      <div class="input-block">
+        <span class="input-label">은퇴 후 목표 월 생활비</span>
+        <div class="input-row"><input type="number" id="i-retire" value="300" min="50" max="1000" step="10" oninput="run()"><span class="input-unit">만원</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">물가 상승률 (현재 2.2%)</span>
+        <div class="input-row"><input type="number" id="i-inflation" value="2.2" min="1" max="5" step="0.1" oninput="run()"><span class="input-unit">%</span></div>
+      </div>
+    </div>
+
+    <div class="sec-title">포트폴리오 구성 (비중 합계 = 100%)</div>
+    <div class="input-grid">
+      <div class="input-block">
+        <span class="input-label">TIGER 미국S&P500 ETF</span>
+        <div class="input-row"><input type="number" id="p-sp" value="35" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">KODEX 나스닥100 ETF</span>
+        <div class="input-row"><input type="number" id="p-nq" value="15" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">KODEX 코스피200 ETF</span>
+        <div class="input-row"><input type="number" id="p-ks" value="10" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label" style="color:#D4960A">🏢 리츠/부동산 ETF <span style="font-size:10px;color:var(--text3)">(월배당 7~9%)</span></span>
+        <div class="input-row"><input type="number" id="p-re" value="10" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
+      </div>
+      <div class="input-block">
+        <span class="input-label">채권 / 현금성 자산</span>
+        <div class="input-row"><input type="number" id="p-bd" value="30" min="0" max="100" step="5" oninput="syncPort()"><span class="input-unit">%</span></div>
+      </div>
+    </div>
+    <div id="port-sum-msg" class="note">합계: 100% ✓</div>
+
+    <button class="btn-primary" onclick="showTab(1)">계산 결과 보기 →</button>
+
+    <div class="note" style="margin-top:16px;text-align:center">
+      입력값을 바꾸면 모든 탭이 자동으로 재계산됩니다.
+    </div>
+  </div>
+
+  <!-- PANEL 1: 목표 자산 -->
+  <div class="panel" id="panel-1">
+    <div class="sec-title">FIRE 목표 자산</div>
+
+    <div class="formula" id="f-formula">—</div>
+
+    <div class="card card-highlight">
+      <div class="big-label">FIRE 목표 자산</div>
+      <div class="big-num c-gold" id="r-target">—</div>
+      <div class="big-sub" id="r-target-sub">—</div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-label">현재 보유</div>
+        <div class="metric-val" id="r-current">—</div>
+        <div class="metric-sub" id="r-pct">달성률 —</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">부족 금액</div>
+        <div class="metric-val c-red" id="r-gap">—</div>
+        <div class="metric-sub">채워야 할 금액</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">은퇴 후 월 인출</div>
+        <div class="metric-val c-green" id="r-draw">—</div>
+        <div class="metric-sub" id="r-draw-sub">—</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="r-prog-fill" style="width:0%"></div></div>
+      <div class="progress-meta"><span id="r-prog-l">0%</span><span id="r-prog-r">—</span></div>
+    </div>
+
+    <div class="sec-title" style="margin-top:28px">SWR(안전 인출률) 설정 근거</div>
+    <div class="ev-table">
+      <div class="ev-row"><span class="ev-left">Trinity Study (1998) — 30년 시뮬레이션</span><span class="ev-right c-green">4% 성공률 95%</span></div>
+      <div class="ev-row"><span class="ev-left">주식60/채권40 포트폴리오 기준 검증</span><span class="ev-right">30년 고갈 위험 5%</span></div>
+      <div class="ev-row"><span class="ev-left">한국 평균수명 고려 (83세) — 장수 리스크</span><span class="ev-right c-amber">3.5% 권장 (보수적)</span></div>
+      <div class="ev-row"><span class="ev-left">40세 이전 조기 은퇴 (40년+ 운용)</span><span class="ev-right c-amber">3.5% 강권</span></div>
+      <div class="ev-row"><span class="ev-left">현재 적용 인출률</span><span class="ev-right c-blue" id="r-swr-used">—</span></div>
+    </div>
+    <div id="swr-note" class="note"></div>
+  </div>
+
+  <!-- PANEL 2: 포트폴리오 수입 -->
+  <div class="panel" id="panel-2">
+    <div class="sec-title">포트폴리오 구성 시각화</div>
+    <div class="port-bar" id="port-bar">
+      <div class="port-seg" id="seg-sp" style="background:#185FA5;width:35%">SP500</div>
+      <div class="port-seg" id="seg-nq" style="background:#378ADD;width:15%">NQ100</div>
+      <div class="port-seg" id="seg-ks" style="background:#1D9E75;width:10%">KS200</div>
+      <div class="port-seg" id="seg-re" style="background:#D4960A;width:10%">리츠</div>
+      <div class="port-seg" id="seg-bd" style="background:#3E5668;width:30%">채권</div>
+    </div>
+
+    <div class="sec-title">자산별 기대 수익 분해</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="port-table" style="padding:0">
+        <thead>
+          <tr style="padding:0 20px">
+            <th style="padding:10px 20px">자산</th>
+            <th style="padding:10px 8px">비중</th>
+            <th style="padding:10px 8px">기대 수익률</th>
+            <th style="padding:10px 8px">기여 수익률</th>
+            <th style="padding:10px 20px 10px 8px;text-align:right">월 수입</th>
+          </tr>
+        </thead>
+        <tbody id="port-tbody" style="padding:0 20px"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:12px 20px;color:var(--text)">합계</td>
+            <td></td>
+            <td style="padding:12px 8px;color:#6AABFF" id="total-ret">—</td>
+            <td style="padding:12px 20px 12px 8px;color:var(--accent2);text-align:right" id="total-monthly">—</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="sec-title">수익률 산정 근거</div>
+    <div class="ev-table">
+      <div class="ev-row"><span class="ev-left">S&P500 달러 기준 장기 연평균 (1928년~)</span><span class="ev-right c-green">~10%</span></div>
+      <div class="ev-row"><span class="ev-left">원화 환산 시 환율 차감 (보수적 추정)</span><span class="ev-right">−1~2%</span></div>
+      <div class="ev-row"><span class="ev-left">TIGER 미국S&P500 ETF 실질 기대</span><span class="ev-right c-blue">8.5%</span></div>
+      <div class="ev-row"><span class="ev-left">나스닥100 ETF 장기 기대 (변동성 高)</span><span class="ev-right c-blue">10.0%</span></div>
+      <div class="ev-row"><span class="ev-left">코스피200 ETF 장기 기대 (원화)</span><span class="ev-right">6.0%</span></div>
+      <div class="ev-row"><span class="ev-left">🏢 TIGER 리츠부동산인프라 — 배당 7.6% + 주가 2.4%</span><span class="ev-right c-amber">기대 총수익 ~8%</span></div>
+      <div class="ev-row"><span class="ev-left">🏢 KODEX 한국부동산리츠인프라 — 배당 7.25%</span><span class="ev-right c-amber">기대 총수익 ~7.5%</span></div>
+      <div class="ev-row"><span class="ev-left">리츠 주의: 금리 상승기·해외리츠 공모가 대비 대폭 하락 선례</span><span class="ev-right" style="color:#C0392B">리스크 ⚠</span></div>
+      <div class="ev-row"><span class="ev-left">채권/현금 (한은 기준금리 2.5% 기준)</span><span class="ev-right">3.5%</span></div>
+      <div class="ev-row"><span class="ev-left">포트폴리오 가중 평균 수익률</span><span class="ev-right c-gold" id="r-port-ret">—</span></div>
+      <div class="ev-row"><span class="ev-left">물가 차감 실질 수익률</span><span class="ev-right c-amber" id="r-real-ret">—</span></div>
+    </div>
+
+    <div class="sec-title">목표 자산 도달 시 월 수입 계산</div>
+    <div class="card card-highlight">
+      <div class="big-label">은퇴 후 월 인출 가능액</div>
+      <div class="big-num c-green" id="r-port-monthly">—</div>
+      <div class="big-sub" id="r-port-sub">—</div>
+    </div>
+    <div class="formula" id="r-port-formula">—</div>
+  </div>
+
+  <!-- PANEL 3: 기간별 계획 -->
+  <div class="panel" id="panel-3">
+    <div class="sec-title">현재 vs 목표 갭</div>
+    <div class="gap-card">
+      <div class="gap-row">
+        <div class="gap-side">
+          <div class="gap-sub">현재 자산</div>
+          <div class="gap-num" id="p-cur">—</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="gap-side" style="text-align:right">
+          <div class="gap-sub">목표 자산</div>
+          <div class="gap-num c-gold" id="p-tgt">—</div>
+        </div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="p-prog" style="width:0%"></div></div>
+      <div class="progress-meta">
+        <span id="p-pct">0%</span>
+        <span>부족: <strong class="c-red" id="p-gap">—</strong></span>
+      </div>
+    </div>
+
+    <div class="sec-title">기간별 필요 월 저축액</div>
+    <p class="note" style="margin-bottom:12px">복리 수익률이 적용되므로 기간이 길수록 저축 부담이 크게 줄어듭니다.</p>
+    <div class="period-grid" id="period-grid"></div>
+
+    <div class="plan-detail" id="plan-detail">
+      <div class="sec-title" style="margin-top:28px">선택한 플랜 상세</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="plan-detail-inner" style="padding:0"></div>
+      </div>
+      <div class="formula" id="plan-formula">—</div>
+    </div>
+
+    <div class="sec-title" style="margin-top:28px">절세 계좌 활용 시 추가 효과</div>
+    <div class="ev-table">
+      <div class="ev-row"><span class="ev-left">IRP 연 900만원 납입 세액공제</span><span class="ev-right c-green">최대 연 148.5만원 환급</span></div>
+      <div class="ev-row"><span class="ev-left">ISA 비과세 수익 (2026 확대, 연 4,000만 납입)</span><span class="ev-right c-green">연 200~400만원 비과세</span></div>
+      <div class="ev-row"><span class="ev-left">절세 효과 포함 실질 추가 수익률</span><span class="ev-right c-blue">+0.5~1.0%</span></div>
+      <div class="ev-row"><span class="ev-left">현재 월 저축 가능액</span><span class="ev-right c-gold" id="r-save-possible">—</span></div>
+      <div class="ev-row"><span class="ev-left">현재 저축률</span><span class="ev-right" id="r-saverate">—</span></div>
+    </div>
+  </div>
+
+  <!-- PANEL 4: 1% 테스트 포트폴리오 -->
+  <div class="panel" id="panel-4">
+
+    <!-- 1% 버짓 -->
+    <div class="card card-highlight">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="big-label">내 자산의 1% — 테스트 예산</div>
+          <div class="big-num c-gold" id="t-budget">—</div>
+          <div class="big-sub">이 금액으로 실제 매수 전략을 검증합니다<br>잃어도 전체 자산에 영향 없는 '안전한 실험실'</div>
+        </div>
+        <div style="background:rgba(232,200,74,0.08);border:1px solid rgba(232,200,74,0.2);border-radius:8px;padding:12px 16px;min-width:140px">
+          <div style="font-size:11px;color:#8A7A3A;font-family:'DM Mono',monospace;margin-bottom:4px">테스트 원칙</div>
+          <div style="font-size:12px;color:#E8C84A;line-height:1.7">최소 3개월 보유<br>수익 아닌 학습 목표<br>감정 기록 필수</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 전략 선택 -->
+    <div class="sec-title">부동산 ETF 현황 (2026년 3월 기준)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+      <div style="background:rgba(212,150,10,0.06);border:1px solid rgba(212,150,10,0.2);border-radius:var(--radius-sm);padding:14px">
+        <div style="font-size:11px;color:#BA7517;font-family:'DM Mono',monospace;margin-bottom:6px">TIGER 리츠부동산인프라</div>
+        <div style="font-size:20px;font-weight:700;color:#D4960A">7.6%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6">연 배당률 · 월배당 지급<br>1년 총수익률 10.4%<br>순자산 1.4조원 · 국내 1위</div>
+      </div>
+      <div style="background:rgba(212,150,10,0.06);border:1px solid rgba(212,150,10,0.2);border-radius:var(--radius-sm);padding:14px">
+        <div style="font-size:11px;color:#BA7517;font-family:'DM Mono',monospace;margin-bottom:6px">KODEX 한국부동산리츠인프라</div>
+        <div style="font-size:20px;font-weight:700;color:#D4960A">7.25%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.6">배당수익률 · 월 17일 지급<br>1년 총수익률 7.5%<br>TIGER와 조합 시 15일 배당</div>
+      </div>
+      <div style="background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.2);border-radius:var(--radius-sm);padding:14px;grid-column:1/-1">
+        <div style="font-size:11px;color:#C0392B;font-family:'DM Mono',monospace;margin-bottom:4px">⚠ 리츠 투자 핵심 리스크</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7">국내 상장리츠 25개 중 88%가 공모가 이하 거래 중 (2025년 기준) · 해외리츠 일부 공모가 대비 −50~70% · 금리 상승기 수익성 급악화 · ETF로 분산하면 개별 리스크 완화 가능 · 한은 기준금리 2.5% 동결 중 — 추가 인하 시 리츠에 호재</div>
+      </div>
+    </div>
+
+    <div class="sec-title">전략 선택 — 5가지 테스트 포트폴리오</div>
+    <p class="note" style="margin-bottom:14px">각 전략은 서로 다른 투자 철학을 테스트합니다. 클릭하면 ETF 구성과 매수 금액이 자동 계산됩니다.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="strat-grid">
+
+      <div class="period-card" id="strat-A" onclick="selectStrat('A')">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">전략 A · 안정형</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:2px">코어 인덱스</div>
+        <div style="font-size:12px;color:#6AABFF;font-weight:600">기대 수익률 7.8%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6">S&P500 + 코스피200<br>변동성 낮고 검증된 조합</div>
+      </div>
+
+      <div class="period-card" id="strat-B" onclick="selectStrat('B')">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">전략 B · 공격형</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:2px">성장 집중</div>
+        <div style="font-size:12px;color:#E8644A;font-weight:600">기대 수익률 9.5%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6">나스닥100 + AI·반도체<br>높은 성장 가능성, 변동성↑</div>
+      </div>
+
+      <div class="period-card" id="strat-C" onclick="selectStrat('C')">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">전략 C · 인컴형</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:2px">배당 현금흐름</div>
+        <div style="font-size:12px;color:#1D9E75;font-weight:600">기대 수익률 6.5%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6">미국배당 + 커버드콜<br>은퇴 후 생활비 모델 미리 체험</div>
+      </div>
+
+      <div class="period-card" id="strat-D" onclick="selectStrat('D')">
+        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">전략 D · 균형형</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:2px">올웨더</div>
+        <div style="font-size:12px;color:#D4960A;font-weight:600">기대 수익률 6.8%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6">주식 + 채권 + 금<br>어떤 시장 국면에도 대응</div>
+      </div>
+
+      <div class="period-card" id="strat-E" onclick="selectStrat('E')" style="grid-column:1/-1;border-color:rgba(212,150,10,0.35);background:rgba(212,150,10,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:10px;color:#BA7517;font-family:'DM Mono',monospace;margin-bottom:4px">전략 E · 부동산 포함 ★ NEW</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:2px">부동산 인컴 포트폴리오</div>
+            <div style="font-size:12px;color:#D4960A;font-weight:600">기대 수익률 7.6% · 월배당 구조</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.6">
+              리츠 ETF로 실물 부동산 없이 월세 수익 구현 · S&P500 + 국내리츠 + 미국리츠 + 채권<br>
+              FIRE 후 생활비를 리츠 배당(연 7~8%)으로 충당하는 전략
+            </div>
+          </div>
+          <div style="background:rgba(212,150,10,0.1);border:1px solid rgba(212,150,10,0.2);border-radius:8px;padding:8px 12px;min-width:120px">
+            <div style="font-size:10px;color:#BA7517;margin-bottom:4px">리츠 배당률</div>
+            <div style="font-size:18px;font-weight:700;color:#D4960A">7~9%</div>
+            <div style="font-size:10px;color:#BA7517;margin-top:2px">TIGER·KODEX 기준<br>월배당 지급</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 전략 상세 -->
+    <div id="strat-detail" style="display:none">
+
+      <div class="sec-title" id="strat-detail-title">전략 상세</div>
+
+      <!-- ETF 구성 -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:600" id="sd-name">—</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px" id="sd-desc">—</div>
+        </div>
+        <div class="port-bar" style="margin:12px 18px 4px;border-radius:6px" id="sd-bar"></div>
+        <table class="port-table" style="margin:0">
+          <thead>
+            <tr>
+              <th style="padding:8px 18px">ETF</th>
+              <th style="padding:8px 8px">비중</th>
+              <th style="padding:8px 8px">수익률</th>
+              <th style="padding:8px 18px 8px 8px;text-align:right">매수 금액</th>
+            </tr>
+          </thead>
+          <tbody id="sd-tbody"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" style="padding:10px 18px;font-weight:600">합계</td>
+              <td style="padding:10px 8px;color:#E8C84A;font-weight:600" id="sd-ret">—</td>
+              <td style="padding:10px 18px 10px 8px;text-align:right;font-weight:600;color:#1D9E75" id="sd-total">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- 1년 시뮬레이션 -->
+      <div class="sec-title">1년 시뮬레이션 (시나리오별)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="sd-scenarios"></div>
+
+      <div class="formula" id="sd-formula">—</div>
+
+      <!-- 테스트 목적 -->
+      <div class="sec-title">이 전략으로 무엇을 배우나</div>
+      <div class="ev-table" id="sd-learning"></div>
+
+      <!-- 체크리스트 -->
+      <div class="sec-title">실행 체크리스트</div>
+      <div id="sd-checklist" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+
+      <!-- 관찰 일지 -->
+      <div class="sec-title">관찰 일지 (브라우저 저장)</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="journal-input" placeholder="오늘의 시장 반응·감정 기록..." style="flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px;font-family:'Pretendard',sans-serif;outline:none">
+        <button onclick="addJournal()" style="padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Pretendard',sans-serif;white-space:nowrap">기록</button>
+      </div>
+      <div id="journal-list" style="display:flex;flex-direction:column;gap:6px"></div>
+
+    </div>
+
+    <!-- 테스트 vs 실전 비교 -->
+    <div class="sec-title" style="margin-top:28px">1% 테스트의 핵심 원칙</div>
+    <div class="ev-table">
+      <div class="ev-row"><span class="ev-left">테스트 예산은 자산의 1%로 고정</span><span class="ev-right c-green">전체 전략 영향 없음</span></div>
+      <div class="ev-row"><span class="ev-left">최소 3개월 — 단기 등락에 흔들리지 않기</span><span class="ev-right c-blue">행동 패턴 관찰</span></div>
+      <div class="ev-row"><span class="ev-left">수익률보다 내 감정 반응 관찰이 목적</span><span class="ev-right">리스크 허용도 측정</span></div>
+      <div class="ev-row"><span class="ev-left">하락 시 추가 매수 충동 vs 공포 반응 기록</span><span class="ev-right c-amber">본인 투자 성향 파악</span></div>
+      <div class="ev-row"><span class="ev-left">🏢 리츠 전략 E: 배당 지급일마다 감정 기록</span><span class="ev-right c-amber">인컴 투자 적성 확인</span></div>
+      <div class="ev-row"><span class="ev-left">3개월 후 FIRE 포트폴리오로 전환 여부 결정</span><span class="ev-right c-gold">데이터 기반 확장</span></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p>본 계산기는 참고용 시뮬레이션이며 투자 권유가 아닙니다. 세금·수수료 미포함.</p>
+    <p style="margin-top:4px">Made by <a href="#">개발자리</a> · 2026년 3월 26일 기준 데이터</p>
+  </div>
+
+</div>
+
+<script>
+const ASSETS = [
+  { key:'sp', label:'TIGER 미국S&P500', color:'#185FA5', ret:8.5 },
+  { key:'nq', label:'KODEX 나스닥100',  color:'#378ADD', ret:10.0 },
+  { key:'ks', label:'KODEX 코스피200',  color:'#1D9E75', ret:6.0 },
+  { key:'re', label:'리츠/부동산 ETF',  color:'#D4960A', ret:7.8 },
+  { key:'bd', label:'채권 / 현금',       color:'#3E5668', ret:3.5 },
+];
+
+function g(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(g(id).value) || 0; }
+
+function fmtW(n){
+  if(n >= 100000000) return (n/100000000).toFixed(2) + '억원';
+  if(n >= 10000)     return Math.round(n/10000).toLocaleString('ko-KR') + '만원';
+  return Math.round(n).toLocaleString('ko-KR') + '원';
+}
+function fmtM(n){ return Math.round(n/10000).toLocaleString('ko-KR') + '만원'; }
+function fmtMon(n){ return Math.round(n/10000).toLocaleString('ko-KR') + '만원/월'; }
+
+function showTab(idx){
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  if(idx===4) renderTestBudget();
+}
+
+// ── STRATEGIES ──
+const STRATS = {
+  A: {
+    name:'코어 인덱스 (안정형)', color:'#185FA5',
+    desc:'S&P500과 코스피200만으로 구성. 가장 검증된 방식. 변동성을 경험하며 장기 보유 훈련.',
+    ret: 7.8,
+    etfs:[
+      {label:'TIGER 미국S&P500',    color:'#185FA5', w:60, ret:8.5, fee:0.07, why:'미국 시장 핵심. 달러 자산 노출 경험'},
+      {label:'KODEX 코스피200',     color:'#5DCAA5', w:40, ret:6.0, fee:0.08, why:'원화 자산 헤지. 한국 시장 감각 유지'},
+    ],
+    learning:[
+      ['환율 영향 체감','달러 ETF가 원화 ETF와 어떻게 다르게 움직이는지 직접 확인'],
+      ['장기 보유 멘탈','단기 등락에 매도 충동이 생기는지 감정 관찰'],
+      ['지수 추종의 의미','내가 산 ETF가 뉴스와 어떻게 연동되는지 파악'],
+    ],
+    checklist:['ISA 중개형 계좌 개설 여부 확인','TIGER 앱 또는 증권사 앱 매수 방법 숙지','매수 후 알림 설정 (월 1회 확인 리마인더)','3개월 후 리뷰 일정 캘린더 등록'],
+  },
+  B: {
+    name:'성장 집중 (공격형)', color:'#E8644A',
+    desc:'나스닥100 + AI·반도체 ETF 집중. 높은 수익 가능성이 있지만 변동성도 크다. 심리 강도 테스트용.',
+    ret: 9.5,
+    etfs:[
+      {label:'KODEX 미국나스닥100',  color:'#378ADD', w:50, ret:10.0, fee:0.09, why:'기술주 성장의 핵심. 변동성 체험'},
+      {label:'TIGER 반도체TOP10',   color:'#E8644A', w:30, ret:11.0, fee:0.15, why:'AI·HBM 사이클 직접 경험'},
+      {label:'TIGER 미국S&P500',    color:'#185FA5', w:20, ret:8.5,  fee:0.07, why:'앵커 역할. 급락 시 심리 안정'},
+    ],
+    learning:[
+      ['섹터 집중 리스크','반도체가 좋을 때와 나쁠 때 포트폴리오 반응 관찰'],
+      ['변동성 체감','−10% 하락 시 내 반응이 매수인지 공포 매도인지 기록'],
+      ['뉴스 vs 주가','삼성·SK하이닉스 실적 뉴스가 ETF에 미치는 영향 추적'],
+    ],
+    checklist:['반도체 ETF는 개별 종목 리스크가 압축됨을 이해','−20% 손실 시 추가 매수할 여력·의지 사전 결정','주간 1회만 확인 — 잦은 확인은 판단력 저하','뉴스에 흔들리지 않는 원칙 1개 메모해두기'],
+  },
+  C: {
+    name:'배당 현금흐름 (인컴형)', color:'#1D9E75',
+    desc:'미국 배당 ETF + 커버드콜로 월배당 현금흐름을 미리 경험. 은퇴 후 인출 시뮬레이션.',
+    ret: 6.5,
+    etfs:[
+      {label:'TIGER 미국배당다우존스', color:'#1D9E75', w:50, ret:7.0, fee:0.08, why:'월배당 수령 경험. 분배금 재투자 훈련'},
+      {label:'KODEX 200위클리커버드콜', color:'#0F6E56', w:30, ret:7.0, fee:0.25, why:'옵션 프리미엄 인컴. 은퇴 인출 모델'},
+      {label:'TIGER 미국S&P500',      color:'#185FA5', w:20, ret:8.5, fee:0.07, why:'성장 엔진. 배당만으론 물가를 못 이김'},
+    ],
+    learning:[
+      ['배당 재투자 복리','받은 배당금을 바로 재투자하는 습관 형성'],
+      ['커버드콜 구조 이해','왜 주가 상승을 일부 포기하고 프리미엄을 받는지 체험'],
+      ['인컴 vs 성장 트레이드오프','배당이 높으면 주가 상승이 제한되는 현실 직접 확인'],
+    ],
+    checklist:['배당 수령 계좌를 별도로 확인하는 루틴 만들기','분배금은 바로 재투자 — 자동화 설정 여부 확인','커버드콜 ETF의 기초자산 상승 캡 구조 이해','3개월간 받은 총 배당금 기록하여 연환산 계산'],
+  },
+  D: {
+    name:'올웨더 (균형형)', color:'#D4960A',
+    desc:'레이 달리오 올웨더 전략. 어떤 경제 국면에도 안정적. 저성장·인플레·디플레 시나리오 분산.',
+    ret: 6.8,
+    etfs:[
+      {label:'TIGER 미국S&P500',      color:'#185FA5', w:30, ret:8.5, fee:0.07, why:'성장 국면 수혜'},
+      {label:'TIGER 미국나스닥100',   color:'#378ADD', w:15, ret:10.0,fee:0.09, why:'성장 부스터'},
+      {label:'KODEX 국고채10년',      color:'#D4960A', w:40, ret:3.8, fee:0.05, why:'침체·디플레 헤지. 주식과 역상관'},
+      {label:'ACE KRX금현물',         color:'#BA7517', w:15, ret:5.0, fee:0.25, why:'인플레 헤지. 지정학 리스크 방어'},
+    ],
+    learning:[
+      ['자산 간 상관관계','주식이 하락할 때 채권·금이 어떻게 움직이는지 관찰'],
+      ['리밸런싱 실습','분기마다 비중 맞추는 실제 매매 경험'],
+      ['분산의 효과','포트폴리오 전체가 개별 자산보다 변동성이 낮은 이유 체험'],
+    ],
+    checklist:['4개 자산 모두 실제로 매수해보기 (경험이 핵심)','채권 ETF는 주식과 다른 가격 움직임 확인','금 ETF 보관 방식(실물 vs 선물) 확인','3개월 후 리밸런싱 — 비중 초과분 매도 연습'],
+  },
+  E: {
+    name:'부동산 인컴 포트폴리오', color:'#D4960A',
+    desc:'리츠 ETF로 실물 부동산 없이 월세 수익을 구현. 주식 성장 + 부동산 인컴 + 채권 안정. FIRE 후 생활비를 리츠 배당으로 충당하는 전략.',
+    ret: 7.6,
+    etfs:[
+      {label:'TIGER 미국S&P500',           color:'#185FA5', w:35, ret:8.5, fee:0.07, why:'성장 엔진. 장기 자산 불리기'},
+      {label:'TIGER 리츠부동산인프라',      color:'#D4960A', w:25, ret:7.8, fee:0.08, why:'월배당 7.6% + 주가 상승. 한국 오피스·물류센터'},
+      {label:'KODEX 미국부동산리츠(H)',     color:'#BA7517', w:15, ret:7.5, fee:0.09, why:'미국 데이터센터·산업용 리츠. 환 헤지'},
+      {label:'KODEX 나스닥100',            color:'#378ADD', w:10, ret:10.0,fee:0.09, why:'기술주 부스터 위성'},
+      {label:'KODEX 국고채10년',           color:'#3E5668', w:15, ret:3.8, fee:0.05, why:'금리 하락 시 리츠 가격 상승 헤지'},
+    ],
+    learning:[
+      ['리츠 = 간접 부동산','실물 부동산 없이 월세 수익 구조를 체험. 배당 재투자 복리'],
+      ['금리와 리츠 관계','금리 인하 → 리츠 상승 / 금리 상승 → 리츠 하락 패턴 직접 관찰'],
+      ['부동산 vs ETF 차이','레버리지 없음, 유동성 높음, 소액 분산 — 실물 부동산과 비교'],
+      ['리츠 리스크 체감','국내 상장리츠 88%가 공모가 이하인 현실 — ETF 분산의 필요성'],
+    ],
+    checklist:[
+      'TIGER 리츠부동산인프라 배당 일정 확인 (매월 초 지급)',
+      'KODEX 한국부동산리츠인프라와 조합 시 15일마다 배당 수령 가능',
+      '리츠는 금리 민감 자산 — 한은 기준금리 동향 월 1회 확인',
+      '3개월간 총 배당금 기록 → 연환산 배당수익률 직접 계산',
+      '해외리츠 ETF 환헤지(H) 여부 확인 필수',
+    ],
+  },
+};
+
+let currentStrat = null;
+
+function selectStrat(key){
+  currentStrat = key;
+  document.querySelectorAll('#strat-grid .period-card').forEach(c => c.classList.remove('selected'));
+  g('strat-'+key).classList.add('selected');
+
+  const s = STRATS[key];
+  const budget = (num('i-asset') * 10000) * 0.01;
+
+  g('strat-detail').style.display = '';
+  g('strat-detail-title').textContent = s.name + ' — ETF 구성';
+  g('sd-name').textContent = s.name;
+  g('sd-desc').textContent = s.desc;
+
+  // bar
+  g('sd-bar').innerHTML = s.etfs.map(e =>
+    `<div style="background:${e.color};width:${e.w}%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:rgba(255,255,255,0.85)">${e.w >= 20 ? e.label.split(' ').pop() : ''}</div>`
+  ).join('');
+
+  // table
+  g('sd-tbody').innerHTML = s.etfs.map(e => {
+    const amt = budget * e.w / 100;
+    return `<tr>
+      <td style="padding:9px 18px"><span class="dot" style="background:${e.color}"></span><div style="display:inline-block"><div>${e.label}</div><div style="font-size:10px;color:var(--text3);margin-top:1px">${e.why}</div></div></td>
+      <td style="padding:9px 8px;white-space:nowrap">${e.w}%</td>
+      <td style="padding:9px 8px;color:#6AABFF;white-space:nowrap">${e.ret}%</td>
+      <td style="padding:9px 18px 9px 8px;text-align:right;font-weight:600;white-space:nowrap;color:#1D9E75">${fmtW(amt)}</td>
+    </tr>`;
+  }).join('');
+
+  g('sd-ret').textContent = s.ret + '%';
+  g('sd-total').textContent = fmtW(budget);
+
+  // scenarios
+  const sc = [
+    {label:'비관 시나리오', pct:-20, color:'#C0392B', icon:'▼'},
+    {label:'중립 시나리오', pct:s.ret, color:'#D4960A', icon:'→'},
+    {label:'낙관 시나리오', pct:s.ret*1.5, color:'#1D9E75', icon:'▲'},
+  ];
+  g('sd-scenarios').innerHTML = sc.map(sc2 => {
+    const result = budget * (1 + sc2.pct/100);
+    const diff = result - budget;
+    const sign = diff >= 0 ? '+' : '';
+    return `<div class="metric" style="border:1px solid ${sc2.color}22">
+      <div class="metric-label">${sc2.label}</div>
+      <div class="metric-val" style="color:${sc2.color};font-size:16px">${sc2.icon} ${sc2.pct > 0 ? '+' : ''}${sc2.pct.toFixed(1)}%</div>
+      <div style="font-size:14px;font-weight:600;margin-top:4px">${fmtW(result)}</div>
+      <div style="font-size:11px;color:${sc2.color};margin-top:2px">${sign}${fmtW(Math.abs(diff))}</div>
+    </div>`;
+  }).join('');
+
+  g('sd-formula').innerHTML =
+    `투자 원금 <span>${fmtW(budget)}</span> × (1 + ${s.ret}%) = 1년 후 예상 <span>${fmtW(budget*(1+s.ret/100))}</span><br>` +
+    `기대 수익 <span style="color:#1D9E75">+${fmtW(budget*s.ret/100)}</span> — 전체 자산의 ${(s.ret/100).toFixed(2)}% 기여`;
+
+  // learning
+  g('sd-learning').innerHTML = s.learning.map(([t,d]) =>
+    `<div class="ev-row"><span class="ev-left"><strong style="color:var(--text)">${t}</strong><br>${d}</span><span class="ev-right" style="color:#6AABFF;font-size:11px">관찰</span></div>`
+  ).join('');
+
+  // checklist
+  g('sd-checklist').innerHTML = s.checklist.map((c,i) =>
+    `<div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer" onclick="toggleCheck(this)">
+      <div style="width:18px;height:18px;min-width:18px;border-radius:4px;border:1.5px solid var(--border2);margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px" class="chk-box"></div>
+      <span style="font-size:13px;color:var(--text2)">${c}</span>
+    </div>`
+  ).join('');
+
+  renderJournal();
+  g('strat-detail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function toggleCheck(el){
+  const box = el.querySelector('.chk-box');
+  const checked = box.dataset.checked === '1';
+  box.dataset.checked = checked ? '' : '1';
+  box.textContent = checked ? '' : '✓';
+  box.style.background = checked ? '' : 'var(--accent)';
+  box.style.borderColor = checked ? 'var(--border2)' : 'var(--accent)';
+  box.style.color = '#fff';
+  el.style.opacity = checked ? '1' : '0.6';
+}
+
+const JOURNAL_KEY = 'fire_journal';
+function addJournal(){
+  const inp = g('journal-input');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  const entries = JSON.parse(localStorage.getItem(JOURNAL_KEY)||'[]');
+  entries.unshift({date: new Date().toLocaleDateString('ko-KR'), strat: currentStrat||'?', text: txt});
+  if(entries.length > 20) entries.pop();
+  localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries));
+  inp.value = '';
+  renderJournal();
+}
+function renderJournal(){
+  const entries = JSON.parse(localStorage.getItem(JOURNAL_KEY)||'[]');
+  const list = g('journal-list');
+  if(!entries.length){
+    list.innerHTML = '<div class="note">아직 기록이 없습니다. 매수 후 첫 감정을 기록해보세요.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e =>
+    `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;gap:10px">
+      <div style="font-size:13px;color:var(--text2);flex:1">${e.text}</div>
+      <div style="font-size:11px;color:var(--text3);white-space:nowrap;font-family:'DM Mono',monospace">${e.date} · 전략${e.strat}</div>
+    </div>`
+  ).join('');
+}
+
+function renderTestBudget(){
+  const asset = num('i-asset') * 10000;
+  const budget = asset * 0.01;
+  g('t-budget').textContent = fmtW(budget) + ' (자산 ' + num('i-asset').toLocaleString() + '만원의 1%)';
+}
+
+
+
+function syncPort(){
+  const keys = ['sp','nq','ks','re','bd'];
+  const total = keys.reduce((a,k) => a + (parseFloat(g('p-'+k).value)||0), 0);
+  const msg = g('port-sum-msg');
+  if(Math.abs(total-100) > 0.01){
+    msg.textContent = `합계: ${total}% — 100%가 되도록 맞춰주세요`;
+    msg.style.color = '#D4960A';
+  } else {
+    msg.textContent = '합계: 100% ✓';
+    msg.style.color = '#1D9E75';
+  }
+  run();
+}
+
+function calcMonthlySave(target, current, annualRetPct, years){
+  const r = annualRetPct / 100 / 12;
+  const n = years * 12;
+  const fv = current * Math.pow(1+r, n);
+  const need = target - fv;
+  if(need <= 0) return 0;
+  if(r < 0.00001) return need / n;
+  return need * r / (Math.pow(1+r, n) - 1);
+}
+
+function run(){
+  const age       = num('i-age');
+  const assetM    = num('i-asset');
+  const income    = num('i-income');
+  const living    = num('i-living');
+  const retire    = num('i-retire');
+  const inflation = num('i-inflation');
+
+  const assetW = assetM * 10000;
+
+  // Portfolio
+  const keys = ['sp','nq','ks','bd'];
+  const totalW = keys.reduce((a,k) => a + (parseFloat(g('p-'+k).value)||0), 0);
+  const portRet = ASSETS.reduce((a,as) => {
+    const w = totalW > 0 ? (parseFloat(g('p-'+as.key).value)||0)/totalW*100 : 0;
+    return a + w/100 * as.ret;
+  }, 0);
+  const realRet = portRet - inflation;
+  const swr = age <= 40 ? 3.5 : 4.0;
+
+  // Target
+  const annualRetireW = retire * 12 * 10000;
+  const targetW = annualRetireW / (swr / 100);
+  const gapW = Math.max(0, targetW - assetW);
+  const drawW = targetW * swr / 100 / 12;
+  const pct = Math.min(Math.round(assetW / targetW * 100), 100);
+
+  // ── PANEL 1 ──
+  g('f-formula').innerHTML =
+    `목표 자산 = 월 <span>${retire.toLocaleString()}만원</span> × 12 = 연 <span>${(retire*12).toLocaleString()}만원</span> 필요<br>` +
+    `SWR <span>${swr}%</span> 역수 적용 → <span>${(retire*12).toLocaleString()}만원</span> ÷ ${swr}% = <span>${fmtW(targetW)}</span>`;
+
+  g('r-target').textContent = fmtW(targetW);
+  g('r-target-sub').textContent = `은퇴 후 월 ${retire.toLocaleString()}만원 × 12개월 ÷ ${swr}% (SWR) = ${fmtW(targetW)}`;
+  g('r-current').textContent = fmtM(assetW);
+  g('r-pct').textContent = `달성률 ${pct}%`;
+  g('r-gap').textContent = gapW > 0 ? fmtW(gapW) : '이미 달성!';
+  g('r-gap').className = 'metric-val ' + (gapW > 0 ? 'c-red' : 'c-green');
+  g('r-draw').textContent = fmtMon(drawW);
+  g('r-draw-sub').textContent = `목표 자산 ${fmtW(targetW)} × SWR ${swr}% ÷ 12`;
+  g('r-prog-fill').style.width = pct + '%';
+  g('r-prog-l').textContent = pct + '%';
+  g('r-prog-r').textContent = `${fmtW(assetW)} / ${fmtW(targetW)}`;
+  g('r-swr-used').textContent = `${swr}% (${age <= 40 ? '40세 이하 보수적 적용' : '표준 적용'})`;
+  g('swr-note').textContent = age <= 40
+    ? `현재 ${age}세로 은퇴 후 40년 이상 자산을 유지해야 합니다. 3.5% 보수적 인출률을 적용하면 4% 대비 목표 자산이 ${fmtW(targetW - annualRetireW/0.04)}만큼 높아지지만 고갈 위험이 크게 낮아집니다.`
+    : `현재 ${age}세로 표준 4% 인출률을 적용했습니다. 40년+ 운용이 필요하다면 3.5%를 고려하세요.`;
+
+  // ── PANEL 2 ──
+  ASSETS.forEach(a => {
+    const seg = g('seg-'+a.key);
+    if(seg) seg.style.width = (totalW > 0 ? (parseFloat(g('p-'+a.key).value)||0)/totalW*100 : 0) + '%';
+    if(seg) seg.textContent = ((parseFloat(g('p-'+a.key).value)||0) >= 12) ? a.label.split(' ').pop() : '';
+  });
+
+  const tbody = g('port-tbody');
+  tbody.innerHTML = '';
+  ASSETS.forEach(a => {
+    const w = totalW > 0 ? (parseFloat(g('p-'+a.key).value)||0)/totalW*100 : 0;
+    const contrib = w / 100 * a.ret;
+    const monthly = targetW * contrib / 100 / 12;
+    tbody.innerHTML += `<tr>
+      <td style="padding:9px 20px"><span class="dot" style="background:${a.color}"></span>${a.label}</td>
+      <td style="padding:9px 8px">${Math.round(w)}%</td>
+      <td style="padding:9px 8px">${a.ret}%</td>
+      <td style="padding:9px 8px;color:#6AABFF">${contrib.toFixed(2)}%</td>
+      <td style="padding:9px 20px 9px 8px;text-align:right;color:#1D9E75">${fmtMon(monthly)}</td>
+    </tr>`;
+  });
+  g('total-ret').textContent = portRet.toFixed(2) + '%';
+  g('total-monthly').textContent = fmtMon(targetW * portRet / 100 / 12);
+  g('r-port-ret').textContent = portRet.toFixed(2) + '%';
+  g('r-real-ret').textContent = realRet.toFixed(2) + '% (' + portRet.toFixed(1) + '% − ' + inflation + '%)';
+
+  g('r-port-monthly').textContent = fmtMon(drawW);
+  g('r-port-sub').textContent = `포트폴리오 수익률 ${portRet.toFixed(1)}% / SWR ${swr}% / 실질 수익률 ${realRet.toFixed(1)}%`;
+  g('r-port-formula').innerHTML =
+    `목표 자산 <span>${fmtW(targetW)}</span> × SWR <span>${swr}%</span> ÷ 12개월 = 월 <span>${fmtMon(drawW)}</span><br>` +
+    `포트폴리오 수익률 <span>${portRet.toFixed(1)}%</span> − 물가 <span>${inflation}%</span> = 실질 <span>${realRet.toFixed(1)}%</span>`;
+
+  // ── PANEL 3 ──
+  g('p-cur').textContent = fmtW(assetW);
+  g('p-tgt').textContent = fmtW(targetW);
+  g('p-prog').style.width = pct + '%';
+  g('p-pct').textContent = pct + '%';
+  g('p-gap').textContent = gapW > 0 ? fmtW(gapW) : '이미 달성!';
+
+  const savePoss = (income - living) * 10000;
+  const saveRate = income > 0 ? Math.round(savePoss / (income*10000) * 100) : 0;
+  g('r-save-possible').textContent = fmtMon(Math.max(0, savePoss));
+  g('r-saverate').textContent = saveRate + '% (월 ' + income.toLocaleString() + '만원 기준)';
+
+  const periods = [5, 10, 15, 20];
+  const grid = g('period-grid');
+  grid.innerHTML = '';
+  periods.forEach(yr => {
+    const monthly = calcMonthlySave(targetW, assetW, portRet, yr);
+    const retireAge = Math.round(age + yr);
+    const isOk = monthly <= savePoss * 1.0;
+    const cls = monthly <= 0 ? 'feasible' : monthly <= savePoss * 0.7 ? 'feasible' : monthly <= savePoss ? 'hard' : 'tough';
+    const label = monthly <= 0 ? '이미 달성' : cls === 'feasible' ? '여유 가능' : cls === 'hard' ? '빡빡하게 가능' : '현수입 초과';
+    const div = document.createElement('div');
+    div.className = 'period-card';
+    div.id = 'pc-' + yr;
+    div.innerHTML = `
+      <div class="period-label">목표 기간</div>
+      <div class="period-yr">${yr}년</div>
+      <div class="period-monthly ${cls}">${monthly <= 0 ? '0원' : fmtMon(monthly)}</div>
+      <div class="period-age">${retireAge}세 은퇴 · ${label}</div>`;
+    div.onclick = () => selectPlan(yr, monthly, portRet, retireAge, targetW, assetW, income);
+    grid.appendChild(div);
+  });
+}
+
+function selectPlan(yr, monthly, portRet, retireAge, target, current, income){
+  document.querySelectorAll('.period-card').forEach(c => c.classList.remove('selected'));
+  g('pc-'+yr).classList.add('selected');
+
+  const incomeW = income * 10000;
+  const saveRate = income > 0 ? Math.round(monthly / incomeW * 100) : 0;
+  const leftover = Math.max(0, incomeW - monthly);
+  const growthOfCurrent = current * Math.pow(1 + portRet/100, yr) - current;
+  const totalContrib = monthly * 12 * yr;
+
+  const rateClass = saveRate > 80 ? 'c-red' : saveRate > 60 ? 'c-amber' : 'c-green';
+
+  g('plan-detail-inner').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <tbody>
+        <tr><td style="padding:10px 20px;color:var(--text2);border-bottom:1px solid var(--border)">목표 자산</td><td style="padding:10px 20px;text-align:right;font-weight:600;color:#E8C84A;border-bottom:1px solid var(--border)">${fmtW(target)}</td></tr>
+        <tr><td style="padding:10px 20px;color:var(--text2);border-bottom:1px solid var(--border)">현재 자산 (${yr}년 복리 증식분)</td><td style="padding:10px 20px;text-align:right;font-weight:600;color:#1D9E75;border-bottom:1px solid var(--border)">+${fmtW(growthOfCurrent)}</td></tr>
+        <tr><td style="padding:10px 20px;color:var(--text2);border-bottom:1px solid var(--border)">월 필요 저축액</td><td style="padding:10px 20px;text-align:right;font-weight:700;color:#6AABFF;border-bottom:1px solid var(--border)">${fmtMon(monthly)}</td></tr>
+        <tr><td style="padding:10px 20px;color:var(--text2);border-bottom:1px solid var(--border)">필요 저축률</td><td style="padding:10px 20px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)" class="${rateClass}">${saveRate}%</td></tr>
+        <tr><td style="padding:10px 20px;color:var(--text2);border-bottom:1px solid var(--border)">저축 후 월 생활비</td><td style="padding:10px 20px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">${fmtW(leftover)}</td></tr>
+        <tr><td style="padding:10px 20px;color:var(--text2);border-bottom:1px solid var(--border)">적용 포트폴리오 수익률</td><td style="padding:10px 20px;text-align:right;font-weight:600;border-bottom:1px solid var(--border)">${portRet.toFixed(2)}%/년</td></tr>
+        <tr><td style="padding:10px 20px;color:var(--text2)">${yr}년간 총 납입 원금</td><td style="padding:10px 20px;text-align:right;font-weight:600">${fmtW(totalContrib)}</td></tr>
+      </tbody>
+    </table>`;
+
+  g('plan-formula').innerHTML =
+    `현재 자산 <span>${fmtW(current)}</span> × (1+${portRet.toFixed(1)}%)^${yr}<br>` +
+    `+ 월 <span>${fmtMon(monthly)}</span> × 복리 적립<br>` +
+    `= ${yr}년 후 <span>${fmtW(target)}</span> 도달 → ${retireAge}세 은퇴`;
+
+  g('plan-detail').classList.add('visible');
+}
+
+// init
+run();
+syncPort();
+renderJournal();
+</script>
+</body>
+</html>
