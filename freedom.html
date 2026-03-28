@@ -293,7 +293,10 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <div id="lp-warn" style="display:none"></div>
   </div>
 
-  <div class="nav-row"><button class="btn-next" onclick="goStep(1)">다음: 수입 현황 →</button></div>
+  <div class="nav-row">
+    <button onclick="frReset()" class="btn-back" style="font-size:12px;color:#7A96AB;border-color:rgba(255,255,255,.1);transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='#7A96AB'">초기화</button>
+    <button class="btn-next" onclick="goStep(1)">다음: 수입 현황 →</button>
+  </div>
 </div>
 
 <!-- ── STEP 1: 수입 현황 ── -->
@@ -1285,13 +1288,67 @@ function goStep(n){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+/* ── localStorage 저장/복원 ── */
+const FR_STORAGE_KEY = 'freedom-calc-data';
+const FR_FIELDS = ['i-age','i-income','i-living','i-inf','inc-app','inc-edu','inc-re','inc-div','inc-cons','inc-etc'];
+
+function frReset(){
+  if(!confirm('모든 입력값을 초기화하시겠습니까?')) return;
+  localStorage.removeItem(FR_STORAGE_KEY);
+  location.reload();
+}
+
+function frSave(){
+  const data = {};
+  FR_FIELDS.forEach(id => { const el=g(id); if(el) data[id]=el.value; });
+  data._assets = assets.map(a=>({...a}));
+  data._freedomType = freedomType;
+  try { localStorage.setItem(FR_STORAGE_KEY, JSON.stringify(data)); } catch(e){}
+}
+function frLoad(){
+  try {
+    const raw = localStorage.getItem(FR_STORAGE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    FR_FIELDS.forEach(id => {
+      if(data[id] !== undefined && data[id] !== ''){ const el=g(id); if(el) el.value=data[id]; }
+    });
+    if(data._assets && data._assets.length > 0){
+      assets = data._assets;
+      assetIdCounter = Math.max(...assets.map(a=>a.id), 0);
+      return true;
+    }
+    return false;
+  } catch(e){ return false; }
+}
+
+// 입력 필드에 저장 이벤트 연결
+FR_FIELDS.forEach(id => { const el=g(id); if(el) el.addEventListener('input', frSave); });
+
+// 자산 변경 시에도 저장 — 기존 함수 래핑
+const _origUpdateAsset = updateAsset;
+updateAsset = function(id, key, val){ _origUpdateAsset(id, key, val); frSave(); };
+const _origAddAsset = addAsset;
+addAsset = function(...args){ _origAddAsset(...args); frSave(); };
+const _origRemoveAsset = removeAsset;
+removeAsset = function(id){ _origRemoveAsset(id); frSave(); };
+const _origSelectFreedom = selectFreedom;
+selectFreedom = function(type){ _origSelectFreedom(type); frSave(); };
+
 /* init */
-addAsset('💰','예금·적금','A',3.5,0,3.5,'medium');
-addAsset('📈','국내 주식·ETF','B',6.5,6.5,0,'high');
-addAsset('💵','현금·파킹통장','A',3.2,0,3.2,'instant');
+const hasData = frLoad();
+if(!hasData){
+  addAsset('💰','예금·적금','A',3.5,0,3.5,'medium');
+  addAsset('📈','국내 주식·ETF','B',6.5,6.5,0,'high');
+  addAsset('💵','현금·파킹통장','A',3.2,0,3.2,'instant');
+}
 renderAssets();
+liveCalc();
 calcIncome();
-selectFreedom('A');
+
+const savedRaw = localStorage.getItem(FR_STORAGE_KEY);
+const savedFreedom = savedRaw ? JSON.parse(savedRaw)._freedomType : null;
+selectFreedom(savedFreedom || 'A');
 </script>
 </body>
 </html>

@@ -291,7 +291,7 @@
       </div>
       <div class="input-block">
         <span class="input-label">현재 보유 자산 (순자산)</span>
-        <div class="input-row"><input type="number" id="i-asset" value="5000" min="0" max="500000" step="500" oninput="run()"><span class="input-unit">만원</span></div>
+        <div class="input-row"><input type="number" id="i-asset" value="5000" min="0" max="500000" step="500" oninput="run();updateAssetUnit()"><span class="input-unit" id="asset-unit">만원</span></div>
       </div>
       <div class="input-block">
         <span class="input-label">월 수입 (세후)</span>
@@ -345,6 +345,7 @@
     <div class="note" style="margin-top:16px;text-align:center">
       입력값을 바꾸면 모든 탭이 자동으로 재계산됩니다.
     </div>
+    <button onclick="fpReset()" style="margin-top:8px;padding:8px 16px;font-size:12px;color:#7A96AB;background:none;border:1px solid rgba(255,255,255,.1);border-radius:8px;cursor:pointer;font-family:'Pretendard',sans-serif;transition:border-color .15s" onmouseover="this.style.borderColor='#C0392B';this.style.color='#C0392B'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='#7A96AB'">입력값 초기화</button>
   </div>
 
   <!-- PANEL 1: 목표 자산 -->
@@ -674,6 +675,20 @@ const ASSETS = [
 
 function g(id){ return document.getElementById(id); }
 function num(id){ return parseFloat(g(id).value) || 0; }
+
+function updateAssetUnit(){
+  const v = num('i-asset');
+  const u = g('asset-unit');
+  if(v >= 100000000){
+    const jo = v / 100000000;
+    u.textContent = '만원 = ' + (jo%1===0?jo.toFixed(0):jo.toFixed(1)) + '조원';
+  } else if(v >= 10000){
+    const eok = v / 10000;
+    u.textContent = '만원 = ' + (eok%1===0?eok.toFixed(0):eok.toLocaleString('ko-KR',{maximumFractionDigits:1})) + '억원';
+  } else {
+    u.textContent = '만원';
+  }
+}
 
 function fmtW(n){
   if(n >= 100000000) return (n/100000000).toFixed(2) + '억원';
@@ -1073,9 +1088,42 @@ function selectPlan(yr, monthly, portRet, retireAge, target, current, income){
 }
 
 // init
+/* ── localStorage 저장/복원 ── */
+const FP_STORAGE_KEY = 'fire-planner-inputs';
+const FP_FIELDS = ['i-age','i-asset','i-income','i-living','i-retire','i-inflation','p-sp','p-nq','p-ks','p-re','p-bd'];
+
+function fpReset(){
+  if(!confirm('모든 입력값을 초기화하시겠습니까?')) return;
+  localStorage.removeItem(FP_STORAGE_KEY);
+  location.reload();
+}
+
+function fpSave(){
+  const data = {};
+  FP_FIELDS.forEach(id => { data[id] = g(id).value; });
+  try { localStorage.setItem(FP_STORAGE_KEY, JSON.stringify(data)); } catch(e){}
+}
+function fpLoad(){
+  try {
+    const raw = localStorage.getItem(FP_STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    FP_FIELDS.forEach(id => {
+      if(data[id] !== undefined && data[id] !== '') g(id).value = data[id];
+    });
+  } catch(e){}
+}
+
+// 모든 입력 필드에 저장 이벤트 연결
+FP_FIELDS.forEach(id => {
+  g(id).addEventListener('input', fpSave);
+});
+
+fpLoad();
 run();
 syncPort();
 renderJournal();
+updateAssetUnit();
 </script>
 </body>
 </html>
