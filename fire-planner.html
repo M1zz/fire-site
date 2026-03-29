@@ -1158,8 +1158,8 @@ const STRATS = {
     desc:'미국 배당 ETF + 커버드콜로 월배당 현금흐름을 미리 경험. 은퇴 후 인출 시뮬레이션.',
     ret: 6.5,
     etfs:[
-      {label:'TIGER 미국배당다우존스', color:'#1D9E75', w:50, ret:7.0, fee:0.08, why:'월배당 수령 경험. 분배금 재투자 훈련'},
-      {label:'KODEX 200위클리커버드콜', color:'#0F6E56', w:30, ret:7.0, fee:0.25, why:'옵션 프리미엄 인컴. 은퇴 인출 모델'},
+      {label:'TIGER 미국배당다우존스', color:'#1D9E75', w:50, ret:7.0, div:3.5, fee:0.08, why:'월배당 수령 경험. 분배금 재투자 훈련'},
+      {label:'KODEX 200위클리커버드콜', color:'#0F6E56', w:30, ret:7.0, div:7.0, fee:0.25, why:'옵션 프리미엄 인컴. 은퇴 인출 모델'},
       {label:'TIGER 미국S&P500',      color:'#185FA5', w:20, ret:8.5, fee:0.07, why:'성장 엔진. 배당만으론 물가를 못 이김'},
     ],
     learning:[
@@ -1192,8 +1192,8 @@ const STRATS = {
     ret: 7.6,
     etfs:[
       {label:'TIGER 미국S&P500',           color:'#185FA5', w:35, ret:8.5, fee:0.07, why:'성장 엔진. 장기 자산 불리기'},
-      {label:'TIGER 리츠부동산인프라',      color:'#D4960A', w:25, ret:7.8, fee:0.08, why:'월배당 7.6% + 주가 상승. 한국 오피스·물류센터'},
-      {label:'KODEX 미국부동산리츠(H)',     color:'#BA7517', w:15, ret:7.5, fee:0.09, why:'미국 데이터센터·산업용 리츠. 환 헤지'},
+      {label:'TIGER 리츠부동산인프라',      color:'#D4960A', w:25, ret:7.8, div:7.6, fee:0.08, why:'월배당 7.6% + 주가 상승. 한국 오피스·물류센터'},
+      {label:'KODEX 미국부동산리츠(H)',     color:'#BA7517', w:15, ret:7.5, div:5.0, fee:0.09, why:'미국 데이터센터·산업용 리츠. 환 헤지'},
       {label:'KODEX 나스닥100',            color:'#378ADD', w:10, ret:10.0,fee:0.09, why:'기술주 부스터 위성'},
       {label:'KODEX 국고채10년',           color:'#3E5668', w:15, ret:3.8, fee:0.05, why:'금리 하락 시 리츠 가격 상승 헤지'},
     ],
@@ -1216,10 +1216,10 @@ const STRATS = {
     desc:'SCHD + 개별 해자주(KO, MSFT, V, O) + 채권. 배당 성장과 해자 깊이를 동시에 체험하는 포트폴리오.',
     ret: 8.5,
     etfs:[
-      {label:'SCHD (배당귀족 ETF)',  color:'#1D9E75', w:30, ret:6.5,  fee:0.06, why:'배당 성장의 핵심. 연 11% 배당 성장'},
+      {label:'SCHD (배당귀족 ETF)',  color:'#1D9E75', w:30, ret:6.5,  div:3.5, fee:0.06, why:'배당 성장의 핵심. 연 11% 배당 성장'},
       {label:'KO (Coca-Cola)',       color:'#C0392B', w:15, ret:8.0,  fee:0,    why:'교과서 해자주. 62년 연속 배당 인상'},
       {label:'MSFT (Microsoft)',     color:'#378ADD', w:20, ret:12.0, fee:0,    why:'성장+배당 복합. 클라우드 락인 해자'},
-      {label:'O (Realty Income)',    color:'#D4960A', w:15, ret:7.5,  fee:0,    why:'월배당 리츠. NNN 임대 구조'},
+      {label:'O (Realty Income)',    color:'#D4960A', w:15, ret:7.5,  div:5.0, fee:0,    why:'월배당 리츠. NNN 임대 구조'},
       {label:'V (Visa)',             color:'#185FA5', w:10, ret:14.0, fee:0,    why:'결제 네트워크 해자. 배당성장 연 18%'},
       {label:'채권 (TLT/국채ETF)',   color:'#3E5668', w:10, ret:3.5,  fee:0.05, why:'변동성 완충. 디플레 헤지'},
     ],
@@ -1264,7 +1264,7 @@ function selectStrat(key){
     return `<tr>
       <td style="padding:9px 18px"><span class="dot" style="background:${e.color}"></span><div style="display:inline-block"><div>${e.label}</div><div style="font-size:10px;color:var(--text3);margin-top:1px">${e.why}</div></div></td>
       <td style="padding:9px 8px;white-space:nowrap">${e.w}%</td>
-      <td style="padding:9px 8px;color:#6AABFF;white-space:nowrap">${e.ret}%</td>
+      <td style="padding:9px 8px;color:#6AABFF;white-space:nowrap">${e.div != null ? `배당 ${e.div}% + 성장 ${(e.ret - e.div).toFixed(1)}%` : `${e.ret}%`}</td>
       <td style="padding:9px 18px 9px 8px;text-align:right;font-weight:600;white-space:nowrap;color:#1D9E75">${fmtW(amt)}</td>
     </tr>`;
   }).join('');
